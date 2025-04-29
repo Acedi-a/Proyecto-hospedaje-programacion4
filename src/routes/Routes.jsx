@@ -7,6 +7,8 @@ import { NuevaReserva } from "../pages/user/NuevaReserva"
 import { UserLayout } from "../components/user/Layout"
 import { NuevaCalificacion } from "../pages/user/NuevaCalificacion"
 import { EditarReserva } from "../pages/user/EditarReserva"
+import { Celia } from "../pages/user/Celia"
+
 
 import { AdminDashboard } from "../pages/admin/Dashboard"
 import { AdminHabitaciones } from "../pages/admin/Habitaciones"
@@ -22,13 +24,16 @@ import { AdminLayout } from "../components/admin/Layout"
 
 import { Login } from "../pages/user/Login"
 import { Signup } from "../pages/user/Signup"
+import { ContextCache } from "../components/user/ContextCache"
 
 
 
 
 export const MisRutas = () => {
+
   return (
     <Router>
+      <ContextCache /> 
       <Routes>
         {/* Rutas de usuario */}
         <Route path="/login" element={<Login />} />
@@ -50,6 +55,7 @@ export const MisRutas = () => {
           <Route path="/calificaciones/nueva/:id" element={<NuevaCalificacion />} />
           */}
           <Route path="/servicios" element={<Servicios />} />
+          <Route path="/celia" element={<Celia />} />
           {/*
           <Route path="/servicios/solicitar/:id" element={<SolicitarServicio />} />
           */}

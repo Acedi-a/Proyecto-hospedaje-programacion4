@@ -12,12 +12,13 @@ export const Navbar = () => {
     { href: "/reservas", label: "Mis Reservas" },
     { href: "/reservas/nueva", label: "Nueva Reserva" },
     { href: "/calificaciones", label: "Calificaciones" },
+    { href: "/celia", label: "Cel-IA" },
   ]
 
   const isActive = (path) => {
-    console.log("actual: "+location.pathname)
-    console.log(location.pathname + " =? "+ path)
-    console.log(location.pathname === path)
+    //console.log("actual: "+location.pathname)
+    //console.log(location.pathname + " =? "+ path)
+    //console.log(location.pathname === path)
     return location.pathname === path
   }
 
