@@ -58,7 +58,6 @@ export const ContextCache = () => {
     }, []);
 
     useEffect(() => {
-        // Esta llamada depende de precioEstadisticas, así que se ejecuta después de que se actualiza
         if (precioEstadisticas.promedio) {
             getPreciosRangos();
         }
@@ -72,9 +71,12 @@ export const ContextCache = () => {
             ...serviciosData,
             ...fechaActual
         };
+
+        localStorage.setItem("habitacionesCache", JSON.stringify(habitacionesData));
+        console.log("Habitaciones guardadas:", habitacionesData);
         localStorage.setItem("cacheIA", JSON.stringify(cacheUnificada));
         console.log("Cache guardada:", cacheUnificada);
     }, [precioEstadisticas, preciosRangos, capacidadEstadistica, serviciosData, fechaActual]);
 
-    return null; // Este componente no renderiza nada visual, solo gestiona la caché
+    return null; 
 };
