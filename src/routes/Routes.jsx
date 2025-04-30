@@ -22,6 +22,7 @@ import { AdminLayout } from "../components/admin/Layout"
 
 import { Login } from "../pages/user/Login"
 import { Signup } from "../pages/user/Signup"
+import { CrearHabitacion } from "../pages/admin/CrearHabitacion"
 
 
 
@@ -35,6 +36,9 @@ export const MisRutas = () => {
         <Route path="/signup" element={<Signup />} />
 
         <Route path="/" element={<UserLayout />}>
+
+
+
 
           <Route path="/" element={<Home />} />
           <Route path="/reservas" element={<Reservas />} />
@@ -65,6 +69,10 @@ export const MisRutas = () => {
           <Route path="/admin/calificaciones" element={<AdminCalificaciones />} />
           <Route path="/admin/reportes" element={<AdminReportes />} />
           <Route path="/admin/configuracion" element={<AdminConfiguracion />} />
+
+          <Route path="/admin/crearK" element={<CrearHabitacion />} />
+
+
         </Route>  
       </Routes>
     </Router>
