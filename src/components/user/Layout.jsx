@@ -14,7 +14,7 @@ export const UserLayout = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar uid={userData?.uid || null} />
+      <Navbar uid={userData?.uid || ""} />
       <main className="flex-1">
         <Outlet context={{ userData }} />
       </main>

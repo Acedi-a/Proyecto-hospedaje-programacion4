@@ -1,40 +1,107 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Star } from "lucide-react";
+import { useEffect, useState } from "react"
+import { useNavigate, useOutletContext } from "react-router-dom"
+import { Star } from "lucide-react"
+import { db } from "../../data/firebase"
+import { collection, getDocs, query, where, addDoc, Timestamp } from "firebase/firestore"
+import Select from "react-select"
 
 export const NuevaCalificacion = () => {
-  const navigate = useNavigate();
-  const [puntuacion, setPuntuacion] = useState(0);
-  const [reserva, setReserva] = useState("");
-  const [comentario, setComentario] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate()
+  const [puntuacion, setPuntuacion] = useState(0)
+  const [reserva, setReserva] = useState("")
+  const [comentario, setComentario] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [reservasUser, setReservasUser] = useState([])
 
-  const reservasCompletadas = [
-    {
-      id: "res-003",
-      habitacion: "Habitación Estándar",
-      fechaEstancia: "5 - 10 enero 2025",
-    },
-    {
-      id: "res-004",
-      habitacion: "Cabaña Familiar",
-      fechaEstancia: "20 - 27 diciembre 2024",
-    },
-  ];
+  const { userData } = useOutletContext()
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (puntuacion === 0 || !reserva) {
-      alert("Por favor, selecciona una reserva y asigna una puntuación");
-      return;
+  useEffect(() => {
+    const fetchReservas = async () => {
+      if (!userData?.uid) return
+      console.log("uid en calificacion: ", userData.uid)
+
+      try {
+        const q = query(collection(db, "Reservas"), where("idusuario", "==", userData.uid))
+        const snapshot = await getDocs(q)
+
+        const reservas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+
+        console.log(reservas)
+        setReservasUser(reservas)
+      } catch (error) {
+        console.error("Error al obtener reservas:", error)
+      }
     }
 
-    setIsSubmitting(true);
-    setTimeout(() => {
-      alert("Calificación enviada con éxito");
-      navigate("/calificaciones");
-    }, 1000);
-  };
+    fetchReservas()
+  }, [userData?.uid])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (puntuacion === 0 || !reserva) {
+      alert("Por favor, selecciona una reserva y asigna una puntuación")
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const reservaSeleccionada = reservasUser.find(r => r.id === reserva)
+      console.log("reserva seleccionada: ", reservaSeleccionada)
+
+      await addDoc(collection(db, "reseñas"), {
+        cliente: userData.nombre+" "+userData.apellido,
+        comentario,
+        fechaComentario: Timestamp.now(),
+        reservaId: reservaSeleccionada.id,
+        puntuacion,
+        usuarioId: userData.uid
+      })
+
+      alert("Calificación enviada con éxito")
+      navigate("/calificaciones")
+    } catch (error) {
+      console.error("Error al enviar calificación:", error)
+      alert("Hubo un error al enviar tu calificación")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const estadoColor = {
+    completada: "#34d399",
+    pendiente: "#facc15",
+    cancelada: "#f87171"
+  }
+
+  const capitalizar = (texto) => texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase()
+
+  const opcionesReserva = reservasUser.map((res) => ({
+    value: res.id,
+    label: (
+      <div className="flex items-center gap-2">
+        <span
+          className="text-white text-xs font-semibold px-2 py-0.5 rounded"
+          style={{ backgroundColor: estadoColor[res.estado.toLowerCase()] || "#a8a29e" }}
+        >
+          {capitalizar(res.estado)}
+        </span>
+        <span>
+          {res.habitacion} ({res.fechaInicio.toDate().toLocaleDateString()} - {res.fechaFin.toDate().toLocaleDateString()})
+        </span>
+      </div>
+    ),
+    estado: res.estado.toLowerCase()
+  }))
+
+  const customStyles = {
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isFocused ? "#d1fae5" : "white",
+      color: "black",
+      padding: 10
+    })
+  }
 
   return (
     <main className="container mx-auto px-4 py-8">
@@ -52,27 +119,20 @@ export const NuevaCalificacion = () => {
         <div className="px-6 pb-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Selecciona la reserva a calificar
-              </label>
-              <select
-                value={reserva}
-                onChange={(e) => setReserva(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
-              >
-                <option value="">Selecciona una reserva</option>
-                {reservasCompletadas.map((reserva) => (
-                  <option key={reserva.id} value={reserva.id}>
-                    {reserva.habitacion} ({reserva.fechaEstancia})
-                  </option>
-                ))}
-              </select>
+              <label className="block text-sm font-medium mb-2">Selecciona la reserva a calificar</label>
+              <Select
+                options={opcionesReserva}
+                value={opcionesReserva.find((op) => op.value === reserva)}
+                onChange={(selected) => setReserva(selected.value)}
+                styles={customStyles}
+                placeholder="Selecciona una reserva"
+                isSearchable={false}
+                getOptionLabel={(e) => e.label}
+              />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">
-                ¿Cómo calificarías tu experiencia?
-              </label>
+              <label className="block text-sm font-medium mb-2">¿Cómo calificarías tu experiencia?</label>
               <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map((valor) => (
                   <button
@@ -82,27 +142,19 @@ export const NuevaCalificacion = () => {
                     onClick={() => setPuntuacion(valor)}
                   >
                     <Star
-                      className={`h-8 w-8 ${
-                        valor <= puntuacion
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "text-gray-400"
-                      }`}
+                      className={`h-8 w-8 ${valor <= puntuacion ? "fill-yellow-400 text-yellow-400" : "text-gray-400"}`}
                     />
                   </button>
                 ))}
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                {puntuacion === 1
-                  ? "Muy insatisfecho"
-                  : puntuacion === 2
-                  ? "Insatisfecho"
-                  : puntuacion === 3
-                  ? "Neutral"
-                  : puntuacion === 4
-                  ? "Satisfecho"
-                  : puntuacion === 5
-                  ? "Muy satisfecho"
-                  : "Selecciona una puntuación"}
+                {[
+                  "Muy insatisfecho",
+                  "Insatisfecho",
+                  "Neutral",
+                  "Satisfecho",
+                  "Muy satisfecho"
+                ][puntuacion - 1] || "Selecciona una puntuación"}
               </p>
             </div>
 
@@ -140,5 +192,5 @@ export const NuevaCalificacion = () => {
         </div>
       </div>
     </main>
-  );
-}
+  )
+} 

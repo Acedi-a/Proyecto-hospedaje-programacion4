@@ -1,37 +1,40 @@
 import { Star } from "lucide-react"
 
-export const CardCalificacion = ({ calificacion, esMia = false }) => {
-  // Función para renderizar estrellas
-  const renderEstrellas = (puntuacion) => {
-    return (
-      <div className="flex">
-        {[...Array(5)].map((_, i) => (
-          <Star
-            key={i}
-            className={`h-4 w-4 ${
-              i < puntuacion ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted-foreground"
+export const CardCalificacion = ({ calificacion, esMia }) => {
+  const renderEstrellas = (puntuacion) => (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <Star
+          key={n}
+          className={`w-5 h-5 ${n <= puntuacion ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
             }`}
-          />
-        ))}
-      </div>
-    )
-  }
+        />
+      ))}
+    </div>
+  )
 
   return (
-    <div className="border rounded-lg p-4">
-      <div className="flex justify-between items-start mb-2">
+    <div className="rounded-xl shadow-md p-5 border border-gray-200 bg-white transition hover:shadow-lg">
+      <div className="flex justify-between items-start">
         <div>
-          <h3 className="font-medium">{esMia ? calificacion.habitacion : calificacion.usuario}</h3>
+          <h3 className="text-lg font-semibold text-gray-800">
+            {esMia ? "Tu reseña" : calificacion.cliente || "Cliente"}
+          </h3>
           <p className="text-sm text-gray-500">
-            {esMia ? `Estancia: ${calificacion.fechaEstancia}` : `Por ${calificacion.usuario}`}
+            {calificacion.fechaComentario?.toDate().toLocaleDateString("es-ES", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric"
+            })}
           </p>
         </div>
         {renderEstrellas(calificacion.puntuacion)}
       </div>
-      <div className="mt-2">
-        <p className="text-sm">{calificacion.comentario}</p>
-        <p className="text-xs text-gray-500 mt-2">Publicado el {calificacion.fecha}</p>
+
+      <div className="mt-3 text-gray-700 text-sm">
+        <p className="leading-relaxed">{calificacion.comentario}</p>
       </div>
     </div>
   )
 }
+
