@@ -1,20 +1,48 @@
-
-
-import { Calendar, Coffee, Car, Map, Utensils } from "lucide-react"
-import { format } from "date-fns"
-
-const servicios = [
-  { id: "serv-001", nombre: "Desayuno Gourmet", descripcion: "Productos locales y caseros", precio: 15, icono: <Coffee className="h-4 w-4" /> },
-  { id: "serv-002", nombre: "Transporte al Pueblo", descripcion: "Ida y vuelta", precio: 20, icono: <Car className="h-4 w-4" /> },
-  { id: "serv-003", nombre: "Tour Guiado", descripcion: "Lugares emblemáticos", precio: 35, icono: <Map className="h-4 w-4" /> },
-  { id: "serv-004", nombre: "Cena Romántica", descripcion: "Con velas y vino", precio: 60, icono: <Utensils className="h-4 w-4" /> },
-]
+import { useEffect, useState } from "react";
+import { db } from "../../data/firebase";
+import { collection, query, onSnapshot } from "firebase/firestore";
+import { format } from "date-fns";
 
 export const ReservaDetalles = ({ formData, onFormChange, onDateChange, onServiceToggle }) => {
+  const [servicios, setServicios] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const q = query(collection(db, "Servicios"));
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const serviciosArray = [];
+        snapshot.forEach((doc) => {
+          serviciosArray.push({ ...doc.data(), id: doc.id });
+        });
+        setServicios(serviciosArray);
+        console.log(serviciosArray); // Corregido: console.log en lugar de consolelog
+        setLoading(false);
+      },
+      (err) => {
+        console.error("Error al cargar servicios:", err);
+        setError("No se pudieron cargar los servicios adicionales.");
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return <p>Cargando servicios...</p>;
+  }
+
+  if (error) {
+    return <p className="text-red-600">{error}</p>;
+  }
+
   return (
     <form className="space-y-6">
+      {/* Fechas */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Fechas */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de llegada</label>
           <div className="relative">
@@ -26,7 +54,6 @@ export const ReservaDetalles = ({ formData, onFormChange, onDateChange, onServic
               className="w-full px-3 py-2 border rounded-md"
               min={format(new Date(), "yyyy-MM-dd")}
             />
-            <Calendar className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
           </div>
         </div>
         <div>
@@ -40,7 +67,6 @@ export const ReservaDetalles = ({ formData, onFormChange, onDateChange, onServic
               className="w-full px-3 py-2 border rounded-md"
               min={formData.fechaInicio ? format(new Date(formData.fechaInicio.getTime() + 86400000), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd")}
             />
-            <Calendar className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
           </div>
         </div>
       </div>
@@ -55,27 +81,33 @@ export const ReservaDetalles = ({ formData, onFormChange, onDateChange, onServic
         </select>
       </div>
 
-      {/* Servicios */}
+      {/* Servicios Adicionales */}
       <div>
         <h3 className="text-lg font-medium">Servicios Adicionales</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {servicios.map((servicio) => (
-            <div key={servicio.id} className="flex items-start space-x-3 border rounded-md p-3">
-              <input
-                type="checkbox"
-                checked={formData.serviciosAdicionales.includes(servicio.id)}
-                onChange={() => onServiceToggle(servicio.id)}
-                className="mt-1"
-              />
-              <div>
-                <label className="font-medium flex items-center gap-2">{servicio.nombre} <div className="p-1 bg-emerald-100 rounded-full">{servicio.icono}</div></label>
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>{servicio.descripcion}</span>
-                  <span>${servicio.precio}/persona</span>
+          {servicios.length > 0 ? (
+            servicios
+              .filter((s) => s.estado === "activo" || s.estado === true)
+              .map((servicio) => (
+                <div key={servicio.id} className="flex items-start space-x-3 border rounded-md p-3">
+                  <input
+                    type="checkbox"
+                    checked={formData.serviciosAdicionales.includes(servicio.id)}
+                    onChange={() => onServiceToggle(servicio.id)}
+                    className="mt-1"
+                  />
+                  <div>
+                    <label className="font-medium">{servicio.nombre}</label>
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>{servicio.descripcion}</span>
+                      <span>${servicio.precio}/persona</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              ))
+          ) : (
+            <p>No hay servicios disponibles.</p>
+          )}
         </div>
       </div>
 
@@ -96,5 +128,5 @@ export const ReservaDetalles = ({ formData, onFormChange, onDateChange, onServic
         className="w-full px-3 py-2 border rounded-md resize-none"
       ></textarea>
     </form>
-  )
-}
+  );
+};
