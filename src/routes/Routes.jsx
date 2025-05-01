@@ -29,8 +29,8 @@ import { db } from "../data/firebase";
 import { doc, getDoc } from "firebase/firestore";	
 import { UserProvider } from "../context/UserContext"; // ✅ este es el bueno
 import ListarReservas from "../pages/admin/ListarReservas";
-import Calificaciones from "../pages/user/Calificaciones";
-import AdminCalificaciones from "../pages/admin/Calificaciones";
+import {Calificaciones} from "../pages/user/Calificaciones";
+import {AdminCalificaciones} from "../pages/admin/Calificaciones";
 
 
 
