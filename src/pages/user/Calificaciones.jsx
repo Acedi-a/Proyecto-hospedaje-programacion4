@@ -99,4 +99,4 @@ const Calificaciones = () => {
   );
 };
 
-export { Calificaciones };
+export default Calificaciones;

@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { onAuthStateChanged } from 'firebase/auth';
 import { Home } from "../pages/user/Home";
 import { Reservas } from "../pages/user/Reservas";
-import { Calificaciones } from "../pages/user/Calificaciones";
 import { Servicios } from "../pages/user/Servicios";
 import { NuevaReserva } from "../pages/user/NuevaReserva";
 import { UserLayout } from "../components/user/Layout";
@@ -16,7 +15,6 @@ import { AdminNuevaHabitacion } from "../pages/admin/NuevaHabitacion";
 import { AdminReservas } from "../pages/admin/Reservas";
 import { AdminPagos } from "../pages/admin/Pagos";
 import { AdminServicios } from "../pages/admin/Servicios";
-import { AdminCalificaciones } from "../pages/admin/Calificaciones";
 import { AdminReportes } from "../pages/admin/Reportes";
 import { AdminConfiguracion } from "../pages/admin/Configuracion";
 import { AdminLayout } from "../components/admin/Layout";
@@ -31,6 +29,7 @@ import { db } from "../data/firebase";
 import { doc, getDoc } from "firebase/firestore";	
 import { UserProvider } from "../context/UserContext"; // ✅ este es el bueno
 import ListarReservas from "../pages/admin/ListarReservas";
+import Calificaciones from "../pages/user/Calificaciones";
 
 
 export const MisRutas = () => {
@@ -87,7 +86,6 @@ export const MisRutas = () => {
             <Route path="reservas" element={<Reservas />} />
             <Route path="reservas/nueva" element={<NuevaReserva />} />
             <Route path="reservas/editar/:id" element={<EditarReserva />} />
-            <Route path="calificaciones" element={<Calificaciones />} />
             <Route path="calificaciones/nueva" element={<NuevaCalificacion />} />
             <Route path="servicios" element={<Servicios />} />
           </Route>
@@ -98,8 +96,9 @@ export const MisRutas = () => {
             <Route path="habitaciones/nueva" element={<AdminNuevaHabitacion />} />
             <Route path="pagos" element={<AdminPagos />} />
             <Route path="servicios" element={<AdminServicios />} />
-            <Route path="calificaciones" element={<AdminCalificaciones />} />
             <Route path="reportes" element={<AdminReportes />} />
+            <Route path="calificaciones" element={<Calificaciones />} />
+
             <Route path="configuracion" element={<AdminConfiguracion />} />
             <Route path="crear" element={<CrearHabitacion />} />
             <Route path="editar/:id" element={<EditarHabitacion />} />
