@@ -12,7 +12,7 @@ export const DetallePago = ({ pagoId, onClose }) => {
   useEffect(() => {
     const cargarDetalles = async () => {
       try {
-        // 1. Cargar datos del pago
+        
         const pagoRef = doc(db, "Pagos", pagoId)
         const pagoSnap = await getDoc(pagoRef)
         
@@ -27,7 +27,7 @@ export const DetallePago = ({ pagoId, onClose }) => {
           fecha: pagoData.fechaPago?.toDate() || new Date()
         })
 
-        // 2. Cargar datos de la reserva relacionada
+        
         if (pagoData.idreserva) {
           const reservaRef = doc(db, "Reservas", pagoData.idreserva)
           const reservaSnap = await getDoc(reservaRef)
@@ -42,7 +42,7 @@ export const DetallePago = ({ pagoId, onClose }) => {
               fechaReserva: reservaData.fechaReserva?.toDate()
             })
 
-            // 3. Cargar datos de la habitación relacionada
+            
             if (reservaData.habitacionId) {
               const habitacionRef = doc(db, "Habitaciones", reservaData.habitacionId)
               const habitacionSnap = await getDoc(habitacionRef)
@@ -111,10 +111,9 @@ export const DetallePago = ({ pagoId, onClose }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
-      {/* Fondo semitransparente */}
       
       
-      {/* Contenido del modal */}
+     
       <div className="relative bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-lg mx-4 border border-gray-200">
         <button 
           onClick={onClose}

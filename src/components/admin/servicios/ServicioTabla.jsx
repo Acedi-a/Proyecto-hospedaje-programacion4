@@ -21,24 +21,27 @@ export const ServicioTabla = ({ servicios = [], editarServicio, eliminarServicio
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {servicios.map((servicio) => (
-              <tr key={servicio.id}>
-                {/* Servicio */}
-                <td className="px-6 py-4 whitespace-nowrap">
+              <tr key={servicio.id} className="hover:bg-gray-50 transition-colors">
+                {/* Servicio - Celda con imagen más grande */}
+                <td className="px-6 py-4">
                   <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10">
+                    <div className="flex-shrink-0 h-20 w-20 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
                       <img
-                        className="h-10 w-10 rounded-full object-cover"
-                        src={servicio.imagenUrl || `https://via.placeholder.com/40?text=${servicio.nombre?.charAt(0) || '?'}`}
+                        className="h-full w-full object-cover"
+                        src={servicio.imagenUrl || `https://via.placeholder.com/80?text=${servicio.nombre?.charAt(0) || '?'}`}
                         alt={servicio.nombre || 'Servicio sin nombre'}
+                        onError={(e) => {
+                          e.target.src = `https://via.placeholder.com/80?text=${servicio.nombre?.charAt(0) || '?'}`;
+                        }}
                       />
                     </div>
                     <div className="ml-4">
-                      <div className="flex items-center text-sm font-medium text-gray-900">
-                        {servicio.icono && <span className="mr-2">{servicio.icono}</span>}
-                        {servicio.nombre || 'Servicio sin nombre'}
+                      <div className="flex items-center text-base font-medium text-gray-900">
+                        {servicio.icono && <span className="mr-2 text-lg">{servicio.icono}</span>}
+                        <span>{servicio.nombre || 'Servicio sin nombre'}</span>
                       </div>
                       {servicio.descripcion && (
-                        <div className="text-sm text-gray-500 max-w-xs truncate" title={servicio.descripcion}>
+                        <div className="text-sm text-gray-500 mt-1 max-w-xs line-clamp-2" title={servicio.descripcion}>
                           {servicio.descripcion}
                         </div>
                       )}
@@ -47,28 +50,30 @@ export const ServicioTabla = ({ servicios = [], editarServicio, eliminarServicio
                 </td>
 
                 {/* Categoría */}
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 capitalize">
-                  {servicio.categoria || 'Sin categoría'}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm">
+                    {servicio.categoria || 'Sin categoría'}
+                  </span>
                 </td>
 
                 {/* Precio */}
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-base font-semibold text-gray-900">
                   {formatPrice(servicio.precio)}
                 </td>
 
                 {/* Acciones */}
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center space-x-3">
                     <button
                       onClick={() => editarServicio(servicio)}
-                      className="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                       aria-label={`Editar ${servicio.nombre}`}
                     >
                       Editar
                     </button>
                     <button
                       onClick={() => eliminarServicio(servicio.id)}
-                      className="text-red-600 hover:text-red-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      className="px-4 py-2 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
                       aria-label={`Eliminar ${servicio.nombre}`}
                     >
                       Eliminar

@@ -64,7 +64,7 @@ export const AdminServicios = () => {
     .filter((servicio) => {
       if (filtro === "disponibles") return servicio.estado === true
       if (filtro === "no-disponibles") return servicio.estado === false
-      return true // "todos"
+      return true 
     })
     .filter((servicio) => {
       const termino = busqueda.toLowerCase()
@@ -87,13 +87,13 @@ export const AdminServicios = () => {
   const eliminarServicio = async (id) => {
     if (confirm("¿Deseas eliminar este servicio?")) {
       try {
-        // Buscar el servicio para obtener la ruta de la imagen
+        
         const servicio = listaServicios.find(s => s.id === id)
-        // Eliminar la imagen asociada si existe
+        
         if (servicio?.imagenRuta) {
           await eliminarImagen(servicio.imagenRuta)
         }
-        // Eliminar el documento de Firestore
+        
         await deleteDoc(doc(db, "Servicios", id))
       } catch (error) {
         console.error("Error al eliminar el servicio:", error)
