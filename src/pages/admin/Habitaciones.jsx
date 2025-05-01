@@ -1,165 +1,170 @@
-"use client"
+import { useState, useEffect } from 'react'
+import { collection, getDocs, query, orderBy } from 'firebase/firestore'
+import { db } from '../../data/firebase'
+import { Link } from 'react-router-dom'
 
-import { useState } from "react"
-import { Link } from "react-router-dom"
-import { BedDouble, Edit, MoreHorizontal, Plus, Search, Trash2, Users } from "lucide-react"
-import { habitacionesData } from "../../data/habitaciones.js"
+export function Habitaciones() {
+    const [habitaciones, setHabitaciones] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
+    const [searchTerm, setSearchTerm] = useState('')
 
-export const AdminHabitaciones = () => {
-  const [filtro, setFiltro] = useState("todas")
-  const [busqueda, setBusqueda] = useState("")
+    // Obtener las habitaciones al cargar el componente
+    useEffect(() => {
+        const fetchHabitaciones = async () => {
+            try {
+                const q = query(collection(db, 'Habitaciones'), orderBy('createdAt', 'desc'))
+                const querySnapshot = await getDocs(q)
+                
+                const habitacionesData = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    // Asegurar que la URL de la imagen tenga el formato correcto
+                    imagenUrl: doc.data().imagenUrl || `https://uybrvedtaptizpdqbavx.supabase.co/storage/v1/object/public/imagenes/${doc.data().imagenRuta}`
+                }))
+                
+                setHabitaciones(habitacionesData)
+                setLoading(false)
+            } catch (err) {
+                console.error('Error al obtener habitaciones:', err)
+                setError('Error al cargar las habitaciones')
+                setLoading(false)
+            }
+        }
 
-  const habitacionesFiltradas = habitacionesData
-    .filter((habitacion) => {
-      if (filtro === "todas") return true
-      return habitacion.estado === filtro
-    })
-    .filter((habitacion) => {
-      if (!busqueda) return true
-      return (
-        habitacion.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-        habitacion.descripcion.toLowerCase().includes(busqueda.toLowerCase())
-      )
-    })
+        fetchHabitaciones()
+    }, [])
 
-  const getEstadoColor = (estado) => {
-    switch (estado) {
-      case "disponible":
-        return "bg-green-100 text-green-800"
-      case "ocupada":
-        return "bg-blue-100 text-blue-800"
-      case "mantenimiento":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
+    // Filtrar habitaciones según el término de búsqueda
+    const filteredHabitaciones = habitaciones.filter(habitacion => 
+        habitacion.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        habitacion.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        habitacion.servicios.some(servicio => 
+            servicio.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+    )
 
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Habitaciones</h1>
-          <p className="text-gray-500">Gestiona las habitaciones del hospedaje</p>
+    if (loading) return (
+        <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
-        <Link to="/admin/habitaciones/nueva">
-          <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700">
-            <Plus className="h-4 w-4 mr-2" />
-            Nueva Habitación
-          </button>
-        </Link>
-      </div>
+    )
 
-      <div className="flex items-center justify-between mb-6">
-        <div className="relative w-72">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
-          <input
-            type="text"
-            placeholder="Buscar habitación..."
-            className="pl-8 pr-4 py-2 border border-gray-300 rounded-md w-full"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-          />
+    if (error) return (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {error}
         </div>
-        <div className="border-b">
-          <nav className="flex -mb-px">
-            <button
-              className={`py-2 px-4 border-b-2 font-medium text-sm ${
-                filtro === "todas"
-                  ? "border-emerald-500 text-emerald-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-              onClick={() => setFiltro("todas")}
-            >
-              Todas
-            </button>
-            <button
-              className={`py-2 px-4 border-b-2 font-medium text-sm ${
-                filtro === "disponible"
-                  ? "border-emerald-500 text-emerald-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-              onClick={() => setFiltro("disponible")}
-            >
-              Disponibles
-            </button>
-            <button
-              className={`py-2 px-4 border-b-2 font-medium text-sm ${
-                filtro === "ocupada"
-                  ? "border-emerald-500 text-emerald-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-              onClick={() => setFiltro("ocupada")}
-            >
-              Ocupadas
-            </button>
-            <button
-              className={`py-2 px-4 border-b-2 font-medium text-sm ${
-                filtro === "mantenimiento"
-                  ? "border-emerald-500 text-emerald-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-              onClick={() => setFiltro("mantenimiento")}
-            >
-              Mantenimiento
-            </button>
-          </nav>
-        </div>
-      </div>
+    )
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {habitacionesFiltradas.map((habitacion) => (
-          <div key={habitacion.id} className="overflow-hidden border rounded-lg shadow-sm">
-            <div className="relative h-48 w-full">
-              <img
-                src={habitacion.imagen || "/placeholder.svg"}
-                alt={habitacion.nombre}
-                className="object-cover w-full h-full"
-              />
-              <span
-                className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${getEstadoColor(habitacion.estado)}`}
-              >
-                {habitacion.estado.charAt(0).toUpperCase() + habitacion.estado.slice(1)}
-              </span>
+    return (
+        <div className="container mx-auto px-4 py-8">
+            <div className="flex justify-between items-center mb-8">
+                <h1 className="text-3xl font-bold text-gray-800">Listado de Habitaciones</h1>
+                <Link 
+                    to="/admin/crear"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition duration-200"
+                >
+                    Crear Nueva Habitación
+                </Link>
             </div>
-            <div className="p-4">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h3 className="font-medium text-lg">{habitacion.nombre}</h3>
-                  <p className="text-sm text-gray-500">{habitacion.descripcion}</p>
-                </div>
-                <div className="relative">
-                  <button className="p-2 rounded-md hover:bg-gray-100">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </button>
-                  <div className="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-                    <button className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                      <Edit className="h-4 w-4 mr-2 inline" />
-                      Editar
-                    </button>
-                    <button className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                      <BedDouble className="h-4 w-4 mr-2 inline" />
-                      Cambiar Estado
-                    </button>
-                    <button className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
-                      <Trash2 className="h-4 w-4 mr-2 inline" />
-                      Eliminar
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div className="flex justify-between items-center mt-4">
-                <div className="flex items-center">
-                  <Users className="h-4 w-4 mr-1 text-gray-500" />
-                  <span className="text-sm">{habitacion.capacidad} personas</span>
-                </div>
-                <div className="font-semibold">${habitacion.precio}/noche</div>
-              </div>
+
+            {/* Barra de búsqueda */}
+            <div className="mb-6">
+                <input
+                    type="text"
+                    placeholder="Buscar habitaciones..."
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
             </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
+
+            {/* Listado de habitaciones */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredHabitaciones.length > 0 ? (
+                    filteredHabitaciones.map(habitacion => (
+                        <div key={habitacion.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-200">
+                            {/* Imagen de la habitación */}
+                            <div className="h-48 overflow-hidden">
+                                <img 
+                                    src={habitacion.imagenUrl} 
+                                    alt={habitacion.nombre}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                        e.target.src = 'https://via.placeholder.com/400x300?text=Imagen+no+disponible'
+                                    }}
+                                />
+                            </div>
+                            
+                            {/* Información de la habitación */}
+                            <div className="p-4">
+                                <div className="flex justify-between items-start mb-2">
+                                    <h2 className="text-xl font-semibold text-gray-800">{habitacion.nombre}</h2>
+                                    <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded">
+                                        ${habitacion.precio} / noche
+                                    </span>
+                                </div>
+                                
+                                <p className="text-gray-600 mb-3 line-clamp-2">{habitacion.descripcion}</p>
+                                
+                                <div className="flex items-center mb-3">
+                                    <span className="text-gray-700 mr-2">
+                                        <i className="fas fa-users mr-1"></i> {habitacion.capacidad} personas
+                                    </span>
+                                    <span className="text-gray-700">
+                                        <i className="fas fa-bed mr-1"></i> {habitacion.camas} camas
+                                    </span>
+                                </div>
+                                
+                                {/* Servicios */}
+                                <div className="mb-4">
+                                    <h3 className="text-sm font-medium text-gray-500 mb-1">Servicios:</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {habitacion.servicios.map((servicio, index) => (
+                                            <span 
+                                                key={index} 
+                                                className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded"
+                                            >
+                                                {servicio}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                                
+                                {/* Botones de acción */}
+                                <div className="flex justify-between pt-2 border-t border-gray-200">
+                                    <Link
+                                        to={`/admin/editar/${habitacion.id}`}
+                                        className="text-blue-600 hover:text-blue-800 font-medium text-sm"
+                                    >
+                                        Editar
+                                    </Link>
+                                    <Link
+                                        to={`/habitaciones/${habitacion.id}`}
+                                        className="text-gray-600 hover:text-gray-800 font-medium text-sm"
+                                    >
+                                        Ver detalles
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <div className="col-span-full text-center py-10">
+                        <p className="text-gray-500 text-lg">
+                            {searchTerm ? 'No se encontraron habitaciones con ese criterio' : 'No hay habitaciones registradas aún'}
+                        </p>
+                        {!searchTerm && (
+                            <Link 
+                                to="/habitaciones/crear"
+                                className="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
+                            >
+                                Crear primera habitación
+                            </Link>
+                        )}
+                    </div>
+                )}
+            </div>
+        </div>
+    )
 }
-

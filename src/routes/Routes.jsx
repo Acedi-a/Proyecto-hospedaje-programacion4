@@ -9,7 +9,7 @@ import { NuevaCalificacion } from "../pages/user/NuevaCalificacion"
 import { EditarReserva } from "../pages/user/EditarReserva"
 
 import { AdminDashboard } from "../pages/admin/Dashboard"
-import { AdminHabitaciones } from "../pages/admin/Habitaciones"
+import {  Habitaciones } from "../pages/admin/Habitaciones"
 import { AdminNuevaHabitacion } from "../pages/admin/NuevaHabitacion"
 import { AdminReservas } from "../pages/admin/Reservas"
 import { AdminPagos } from "../pages/admin/Pagos"
@@ -23,6 +23,7 @@ import { AdminLayout } from "../components/admin/Layout"
 import { Login } from "../pages/user/Login"
 import { Signup } from "../pages/user/Signup"
 import { CrearHabitacion } from "../pages/admin/CrearHabitacion"
+import { EditarHabitacion } from "../pages/admin/EditarHabitacion"
 
 
 
@@ -61,7 +62,7 @@ export const MisRutas = () => {
         {/* Rutas de admin */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route path="/admin" element={< AdminDashboard/>} />
-          <Route path="/admin/habitaciones" element={<AdminHabitaciones />} />
+          <Route path="/admin/habitaciones" element={<Habitaciones />} />
           <Route path="/admin/habitaciones/nueva" element={<AdminNuevaHabitacion />} />
           <Route path="/admin/reservas" element={<AdminReservas />} />
           <Route path="/admin/pagos" element={<AdminPagos />} />
@@ -70,9 +71,9 @@ export const MisRutas = () => {
           <Route path="/admin/reportes" element={<AdminReportes />} />
           <Route path="/admin/configuracion" element={<AdminConfiguracion />} />
 
-          <Route path="/admin/crearK" element={<CrearHabitacion />} />
+          <Route path="/admin/crear" element={<CrearHabitacion />} />
 
-
+          <Route path="/admin/editar/:id" element={<EditarHabitacion />} />
         </Route>  
       </Routes>
     </Router>

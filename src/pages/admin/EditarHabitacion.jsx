@@ -1,10 +1,11 @@
-import { useState } from 'react'
-import { collection, addDoc } from 'firebase/firestore'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { doc, getDoc, updateDoc } from 'firebase/firestore'
+import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../data/SupabaseClient'
 import { db } from '../../data/firebase'
 
-export function CrearHabitacion() {
+export function EditarHabitacion() {
+    const { id } = useParams()
     const navigate = useNavigate()
 
     // Estado del formulario
@@ -15,16 +16,54 @@ export function CrearHabitacion() {
         capacidad: '',
         camas: '',
         estado: 'disponible',
-        servicios: []
+        servicios: [],
+        imagenRuta: '',
+        imagenUrl: ''
     })
 
     const [archivoImagen, setArchivoImagen] = useState(null)
     const [previewURL, setPreviewURL] = useState(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState(null)
+    const [loading, setLoading] = useState(true)
 
     // Servicios disponibles
     const serviciosDisponibles = ['wifi', 'tv', 'aire acondicionado', 'jacuzzi', 'room service', 'minibar']
+
+    // Cargar datos de la habitación al montar el componente
+    useEffect(() => {
+        const fetchHabitacion = async () => {
+            try {
+                const docRef = doc(db, 'Habitaciones', id)
+                const docSnap = await getDoc(docRef)
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data()
+                    setFormData({
+                        nombre: data.nombre,
+                        precio: data.precio,
+                        descripcion: data.descripcion || '',
+                        capacidad: data.capacidad,
+                        camas: data.camas,
+                        estado: data.estado || 'disponible',
+                        servicios: data.servicios || [],
+                        imagenRuta: data.imagenRuta,
+                        imagenUrl: data.imagenUrl
+                    })
+                    setPreviewURL(data.imagenUrl)
+                } else {
+                    throw new Error('Habitación no encontrada')
+                }
+            } catch (err) {
+                console.error('Error al cargar habitación:', err)
+                setError(err.message)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchHabitacion()
+    }, [id])
 
     // Manejadores de cambios
     const handleChange = (e) => {
@@ -65,69 +104,75 @@ export function CrearHabitacion() {
         })
     }
 
-    // Función handleSubmit actualizada
+    // Función para guardar cambios
     const handleSubmit = async (e) => {
         e.preventDefault()
         setIsSubmitting(true)
         setError(null)
-        let fileName = null
-
-        // Validación básica
-        if (!formData.nombre || !formData.precio || !formData.capacidad || !formData.camas || !archivoImagen) {
-            setError('Todos los campos marcados con * son obligatorios')
-            setIsSubmitting(false)
-            return
-        }
+        let fileName = formData.imagenRuta // Mantener la misma imagen por defecto
 
         try {
-            // 1. Generar nombre único para el archivo
-            const fileExt = archivoImagen.name.split('.').pop()
-            fileName = `habitaciones/${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`
-            
-            // 2. Subir imagen a Supabase
-            const { error: uploadError } = await supabase.storage
-                .from('imagenes')
-                .upload(fileName, archivoImagen, {
-                    cacheControl: '3600',
-                    contentType: archivoImagen.type,
-                    upsert: false
-                })
+            // Validación básica
+            if (!formData.nombre || !formData.precio || !formData.capacidad || !formData.camas) {
+                throw new Error('Todos los campos marcados con * son obligatorios')
+            }
 
-            if (uploadError) throw uploadError
+            // Si hay nueva imagen, subirla a Supabase
+            if (archivoImagen) {
+                // Eliminar imagen anterior si existe
+                if (formData.imagenRuta) {
+                    await supabase.storage
+                        .from('imagenes')
+                        .remove([formData.imagenRuta])
+                        .catch(console.error)
+                }
 
-            // 3. Obtener URL pública
-            const { data: { publicUrl } } = supabase.storage
-                .from('imagenes')
-                .getPublicUrl(fileName)
+                // Subir nueva imagen
+                const fileExt = archivoImagen.name.split('.').pop()
+                fileName = `habitaciones/${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`
+                
+                const { error: uploadError } = await supabase.storage
+                    .from('imagenes')
+                    .upload(fileName, archivoImagen, {
+                        cacheControl: '3600',
+                        contentType: archivoImagen.type,
+                        upsert: false
+                    })
 
-            // 4. Guardar en Firestore
-            await addDoc(collection(db, 'Habitaciones'), {
+                if (uploadError) throw uploadError
+            }
+
+            // Obtener URL pública (actualizar si cambió la imagen)
+            const imagenUrl = archivoImagen 
+                ? supabase.storage.from('imagenes').getPublicUrl(fileName).data.publicUrl
+                : formData.imagenUrl
+
+            // Actualizar en Firestore
+            await updateDoc(doc(db, 'Habitaciones', id), {
                 nombre: formData.nombre,
                 precio: Number(formData.precio),
                 descripcion: formData.descripcion,
                 servicios: formData.servicios,
                 capacidad: Number(formData.capacidad),
                 camas: Number(formData.camas),
-                imagenRuta: fileName,
-                imagenUrl: publicUrl,
                 estado: formData.estado,
-                createdAt: new Date()
+                ...(archivoImagen && { 
+                    imagenRuta: fileName,
+                    imagenUrl: imagenUrl
+                }),
+                updatedAt: new Date()
             })
 
             // Éxito - redireccionar
-            navigate('/admin/habitaciones', { state: { success: 'Habitación creada exitosamente!' } })
+            navigate('/admin/habitaciones', { 
+                state: { 
+                    success: 'Habitación actualizada exitosamente!',
+                    updatedImage: !!archivoImagen
+                } 
+            })
 
         } catch (error) {
             console.error('Error:', error)
-            
-            // Limpiar imagen subida si hubo error después de subirla
-            if (fileName) {
-                await supabase.storage
-                    .from('imagenes')
-                    .remove([fileName])
-                    .catch(console.error)
-            }
-            
             setError(formatError(error))
         } finally {
             setIsSubmitting(false)
@@ -148,9 +193,33 @@ export function CrearHabitacion() {
         return error.message || 'Error al procesar la solicitud'
     }
 
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="max-w-3xl mx-auto p-6">
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                    {error}
+                </div>
+                <button
+                    onClick={() => navigate('/admin/habitaciones')}
+                    className="mt-4 px-4 py-2 bg-gray-200 rounded-md"
+                >
+                    Volver al listado
+                </button>
+            </div>
+        )
+    }
+
     return (
         <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-md">
-            <h1 className="text-2xl font-bold text-gray-800 mb-6">Crear Nueva Habitación</h1>
+            <h1 className="text-2xl font-bold text-gray-800 mb-6">Editar Habitación</h1>
             
             {error && (
                 <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
@@ -242,6 +311,24 @@ export function CrearHabitacion() {
                     </div>
                 </div>
 
+                {/* Estado */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Estado *
+                    </label>
+                    <select
+                        name="estado"
+                        value={formData.estado}
+                        onChange={handleChange}
+                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        required
+                    >
+                        <option value="disponible">Disponible</option>
+                        <option value="ocupada">Ocupada</option>
+                        <option value="mantenimiento">En mantenimiento</option>
+                    </select>
+                </div>
+
                 {/* Servicios */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -268,8 +355,18 @@ export function CrearHabitacion() {
                 {/* Imagen */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Imagen de la habitación *
+                        Imagen de la habitación
                     </label>
+                    {previewURL && (
+                        <div className="mb-4">
+                            <p className="text-sm font-medium text-gray-700 mb-1">Imagen actual:</p>
+                            <img
+                                src={previewURL}
+                                alt="Vista previa de la habitación"
+                                className="max-w-full h-auto max-h-60 rounded-lg border border-gray-200"
+                            />
+                        </div>
+                    )}
                     <input
                         type="file"
                         accept="image/*"
@@ -280,22 +377,10 @@ export function CrearHabitacion() {
                                   file:text-sm file:font-semibold
                                   file:bg-blue-50 file:text-blue-700
                                   hover:file:bg-blue-100"
-                        required
                     />
                     <p className="mt-1 text-xs text-gray-500">
-                        Formatos aceptados: JPEG, PNG, WEBP (Máximo 5MB)
+                        Deja vacío para mantener la imagen actual. Formatos aceptados: JPEG, PNG, WEBP (Máximo 5MB)
                     </p>
-
-                    {previewURL && (
-                        <div className="mt-4">
-                            <p className="text-sm font-medium text-gray-700 mb-1">Vista previa:</p>
-                            <img
-                                src={previewURL}
-                                alt="Vista previa de la habitación"
-                                className="max-w-full h-auto max-h-60 rounded-lg border border-gray-200"
-                            />
-                        </div>
-                    )}
                 </div>
 
                 {/* Botones */}
@@ -321,7 +406,7 @@ export function CrearHabitacion() {
                                 </svg>
                                 Guardando...
                             </>
-                        ) : 'Guardar Habitación'}
+                        ) : 'Guardar Cambios'}
                     </button>
                 </div>
             </form>
