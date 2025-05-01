@@ -1,14 +1,11 @@
 import { useEffect, useState } from "react"
-
 import { serviciosData } from "../../data/servicios"
 import { ServicioFiltroBusqueda } from "../../components/admin/servicios/ServicioFiltroBusqueda"
 import { ServicioTabla } from "../../components/admin/servicios/ServicioTabla"
 import { ServicioFormulario } from "../../components/admin/servicios/ServicioFormulario"
-import {db} from '../../data/firebase'
+import { db } from '../../data/firebase'
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore'
-
-
-
+import { supabase } from '../../data/SupabaseClient'
 
 export const AdminServicios = () => {
   const [listaServicios, setListaServicios] = useState([])
@@ -32,43 +29,77 @@ export const AdminServicios = () => {
     return () => unsubscribe()
   }, [])
   
+  // Función para subir imagen a Supabase
+  const subirImagen = async (file) => {
+    const fileExt = file.name.split('.').pop()
+    const fileName = `servicios/${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`
+    
+    const { error } = await supabase.storage
+      .from('imagenes')
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        contentType: file.type,
+        upsert: false
+      })
+
+    if (error) throw error
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('imagenes')
+      .getPublicUrl(fileName)
+
+    return { ruta: fileName, url: publicUrl }
+  }
+
+  // Función para eliminar imagen de Supabase
+  const eliminarImagen = async (rutaImagen) => {
+    if (!rutaImagen) return
+    const { error } = await supabase.storage
+      .from('imagenes')
+      .remove([rutaImagen])
+    if (error) console.error("Error al eliminar imagen:", error)
+  }
 
   const serviciosFiltrados = listaServicios
-  .filter((servicio) => {
-    if (filtro === "disponibles") return servicio.estado === true
-    if (filtro === "no-disponibles") return servicio.estado === false
-    return true // "todos"
-  })
-  .filter((servicio) => {
-    const termino = busqueda.toLowerCase()
-    return (
-      servicio.nombre.toLowerCase().includes(termino) ||
-      servicio.descripcion.toLowerCase().includes(termino)
-    )
-  })
+    .filter((servicio) => {
+      if (filtro === "disponibles") return servicio.estado === true
+      if (filtro === "no-disponibles") return servicio.estado === false
+      return true // "todos"
+    })
+    .filter((servicio) => {
+      const termino = busqueda.toLowerCase()
+      return (
+        servicio.nombre.toLowerCase().includes(termino) ||
+        servicio.descripcion.toLowerCase().includes(termino)
+      )
+    })
 
-
-    const cambiarDisponibilidad = async (id) => {
-      try {
-        const ref = doc(db, "Servicios", id)
-        const servicio = listaServicios.find((s) => s.id === id)
-        await updateDoc(ref, { disponible: !servicio.disponible })
-      } catch (error) {
-        console.error("Error al cambiar disponibilidad:", error)
-      }
+  const cambiarDisponibilidad = async (id) => {
+    try {
+      const ref = doc(db, "Servicios", id)
+      const servicio = listaServicios.find((s) => s.id === id)
+      await updateDoc(ref, { estado: !servicio.estado })
+    } catch (error) {
+      console.error("Error al cambiar disponibilidad:", error)
     }
-    
+  }
 
   const eliminarServicio = async (id) => {
     if (confirm("¿Deseas eliminar este servicio?")) {
       try {
+        // Buscar el servicio para obtener la ruta de la imagen
+        const servicio = listaServicios.find(s => s.id === id)
+        // Eliminar la imagen asociada si existe
+        if (servicio?.imagenRuta) {
+          await eliminarImagen(servicio.imagenRuta)
+        }
+        // Eliminar el documento de Firestore
         await deleteDoc(doc(db, "Servicios", id))
       } catch (error) {
         console.error("Error al eliminar el servicio:", error)
       }
     }
   }
-  
 
   const editarServicio = (servicio) => {
     setServicioEditando(servicio)
@@ -81,28 +112,28 @@ export const AdminServicios = () => {
       descripcion: "",
       precio: 0,
       categoria: "general",
-      estado: true
+      estado: true,
+      imagenRuta: "",
+      imagenUrl: ""
     })
     setMostrarFormulario(true)
   }
 
-  const guardarNuevoServicio = async (e) => {
-    e.preventDefault()
+  const guardarNuevoServicio = async (servicioConImagen) => {
     try {
       await addDoc(collection(db, "Servicios"), {
-        ...servicioEditando
+        ...servicioConImagen
       })
       cerrarFormulario()
     } catch (error) {
       console.error("Error al crear el servicio:", error)
+      throw error
     }
   }
-  
 
-  const guardarServicio = async (e) => {
-    e.preventDefault()
+  const guardarServicio = async (servicioConImagen) => {
     try {
-      const { id, ...resto } = servicioEditando
+      const { id, ...resto } = servicioConImagen
       const ref = doc(db, "Servicios", id)
       await updateDoc(ref, {
         ...resto
@@ -110,9 +141,9 @@ export const AdminServicios = () => {
       cerrarFormulario()
     } catch (error) {
       console.error("Error al actualizar el servicio:", error)
+      throw error
     }
   }
-  
   
   const cerrarFormulario = () => {
     setServicioEditando(null)
@@ -151,10 +182,10 @@ export const AdminServicios = () => {
             </button>
           </div>
           <ServicioTabla
-          servicios={serviciosFiltrados}
-          cambiarDisponibilidad={cambiarDisponibilidad}
-          editarServicio={editarServicio}
-          eliminarServicio={eliminarServicio}
+            servicios={serviciosFiltrados}
+            cambiarDisponibilidad={cambiarDisponibilidad}
+            editarServicio={editarServicio}
+            eliminarServicio={eliminarServicio}
           />
         </>
       )}
@@ -162,9 +193,11 @@ export const AdminServicios = () => {
       {mostrarFormulario && servicioEditando && (
         <ServicioFormulario
         servicioEditando={servicioEditando}
-          setServicioEditando={setServicioEditando}
-          guardar={servicioEditando.id ? guardarServicio : guardarNuevoServicio}
-          cancelar={cerrarFormulario}
+        setServicioEditando={setServicioEditando}
+        guardar={servicioEditando.id ? guardarServicio : guardarNuevoServicio}
+        cancelar={cerrarFormulario}
+        subirImagen={subirImagen}
+        eliminarImagen={eliminarImagen}
         />
       )}
     </div>

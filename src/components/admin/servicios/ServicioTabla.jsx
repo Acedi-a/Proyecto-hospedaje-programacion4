@@ -1,4 +1,3 @@
-import { Wrench, Briefcase, Settings } from "lucide-react";
 export const ServicioTabla = ({ servicios = [], editarServicio, eliminarServicio }) => {
   const formatPrice = (price) => {
     const numericPrice = Number(price);
@@ -29,7 +28,7 @@ export const ServicioTabla = ({ servicios = [], editarServicio, eliminarServicio
                     <div className="flex-shrink-0 h-10 w-10">
                       <img
                         className="h-10 w-10 rounded-full object-cover"
-                        src={servicio.imagen || `https://via.placeholder.com/40?text=${servicio.nombre?.charAt(0) || '?'}`}
+                        src={servicio.imagenUrl || `https://via.placeholder.com/40?text=${servicio.nombre?.charAt(0) || '?'}`}
                         alt={servicio.nombre || 'Servicio sin nombre'}
                       />
                     </div>
