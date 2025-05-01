@@ -3,7 +3,11 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../data/firebase";
 import { FaStar } from "react-icons/fa";
 
+<<<<<<< HEAD
 export const AdminCalificaciones = () => {
+=======
+const AdminCalificaciones = () => {
+>>>>>>> f87aef5931880de75940bf4eff5ee127f08ab758
   const [reseñas, setReseñas] = useState([]);
   const [selectedReview, setSelectedReview] = useState(null);
 
@@ -98,3 +102,7 @@ export const AdminCalificaciones = () => {
   );
 };
 
+<<<<<<< HEAD
+=======
+export default AdminCalificaciones ;
+>>>>>>> f87aef5931880de75940bf4eff5ee127f08ab758

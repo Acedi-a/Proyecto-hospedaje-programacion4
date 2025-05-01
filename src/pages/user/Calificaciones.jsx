@@ -4,7 +4,11 @@ import { CardCalificacion } from "../../components/user/CardCalificacion"
 import { db } from "../../data/firebase"
 import { collection, getDocs, query, where } from "firebase/firestore"
 
+<<<<<<< HEAD
 export const Calificaciones = () => {
+=======
+ const Calificaciones = () => {
+>>>>>>> f87aef5931880de75940bf4eff5ee127f08ab758
   const [activeTab, setActiveTab] = useState("mis-calificaciones")
   const [misCalificaciones, setMisCalificaciones] = useState([])
   const [todasCalificaciones, setTodasCalificaciones] = useState([])
@@ -72,6 +76,23 @@ export const Calificaciones = () => {
             </button>
           </nav>
         </div>
+<<<<<<< HEAD
+=======
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>> f87aef5931880de75940bf4eff5ee127f08ab758
       </div>
 
       {loading ? (
@@ -83,6 +104,16 @@ export const Calificaciones = () => {
             <Link to="/calificaciones/nueva">
               <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700">
                 Calificar una Estancia
+<<<<<<< HEAD
+=======
+
+
+
+
+
+
+
+>>>>>>> f87aef5931880de75940bf4eff5ee127f08ab758
               </button>
             </Link>
           </div>
@@ -102,4 +133,10 @@ export const Calificaciones = () => {
       )}
     </div>
   )
+<<<<<<< HEAD
 }
+=======
+}
+
+export default Calificaciones
+>>>>>>> f87aef5931880de75940bf4eff5ee127f08ab758
