@@ -4,6 +4,9 @@ import { ReservaDetalles } from "../../components/user/SeccionReservaDetalle";
 import { ReservaConfirmacion } from "../../components/user/SeccionReservaConfirmacion.jsx";
 import { ReservaPago } from "../../components/user/SeccionReservaPago";
 
+import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
+import { db } from "../../data/firebase.jsx";
+
 export const NuevaReserva = () => {
   const [step, setStep] = useState(1);
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -92,7 +95,6 @@ export const NuevaReserva = () => {
     }
   };
 
-  // Avanzar de paso
   const goToNextStep = () => {
     if (isNextEnabled()) {
       setStep(step + 1);
@@ -101,14 +103,53 @@ export const NuevaReserva = () => {
     }
   };
 
-  // Finalizar reserva
   const finishReservation = () => {
     alert("¡Gracias por tu reserva!");
   };
 
+  const AddDetallesPagoReserva = async () => {
+    try {
+      const pagoRef = await addDoc(collection(db, "Pagos"), {
+        fechaPago: new Date(),
+        metodoPago: "Tarjeta de debito", 
+        total: calcularTotal(), 
+        estado: "pendiente",
+        resumenReserva:{
+          cliente: formData.nombre,
+          email: formData.email,
+          telefono: formData.telefono,
+        }
+      })
+      const idpago = pagoRef.id;
+      console.log("servicios: ",formData.serviciosAdicionales);
+
+      const reservaRef = await addDoc(collection(db, "Reservas"), {
+        fechaInicio: formData.fechaInicio,
+        fechaFin: formData.fechaFin,
+        huespedes: formData.huespedes,
+        fechaReserva: new Date(),
+        estado: "pendiente",
+        habitacion: formData.habitacionId,
+        idserviciosadicionales: formData.serviciosAdicionales,
+        idpago: idpago,
+        idusuario: "iddelapersona",
+        comentariosAdicionales: formData.comentarios,
+      })
+      const idReserva = reservaRef.id;
+
+      await updateDoc(doc(db,"Pagos",idpago),{
+        idreserva: idReserva
+      });
+
+      setStep(4);
+    }
+    catch (error) {
+      console.error("Error al agregar detalles de pago:", error);
+    }
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Contenido según el paso */}
       {step === 1 && <ReservaHabitacion selectedRoom={selectedRoom} onSelectRoom={handleRoomSelect} />}
       {step === 2 && (
         <ReservaDetalles
@@ -118,7 +159,7 @@ export const NuevaReserva = () => {
           onServiceToggle={handleServiceToggle}
         />
       )}
-      {step === 3 && <ReservaPago onSuccess={() => setStep(4)} />}
+      {step === 3 && <ReservaPago onSuccess={() => AddDetallesPagoReserva()} />}
       {step === 4 && <ReservaConfirmacion formData={formData} calcularTotal={calcularTotal} onFinish={finishReservation} />}
 
       {/* Botones de navegación */}
