@@ -1,34 +1,41 @@
-"use client"
-//esta es mi prueba Ser
+'use client'
 import { useState, useEffect } from "react"
-import { reservasData as reservas } from "../../data/reservas"
+import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore'
+import { db } from '../../data/firebase'
+import { DetallePago } from "./DetallePago"
 
 export const AdminPagos = () => {
   const [pagos, setPagos] = useState([])
   const [cargando, setCargando] = useState(true)
   const [filtro, setFiltro] = useState("todos")
   const [busqueda, setBusqueda] = useState("")
+  const [pagoSeleccionado, setPagoSeleccionado] = useState(null)
 
   useEffect(() => {
-    // Simulación de carga de datos
-    setTimeout(() => {
-      // Generar pagos basados en las reservas
-      const pagosDatos = reservas.map((reserva) => {
-        const pagado = Math.random() > 0.3
-        return {
-          id: `PAG-${reserva.id}`,
-          reservaId: reserva.id,
-          cliente: reserva.cliente,
-          monto: reserva.total,
-          fecha: new Date(reserva.fechaCreacion),
-          estado: pagado ? "completado" : "pendiente",
-          metodoPago: pagado ? ["tarjeta", "transferencia", "efectivo"][Math.floor(Math.random() * 3)] : null,
-          referencia: pagado ? `REF-${Math.floor(Math.random() * 10000)}` : null,
-        }
-      })
-      setPagos(pagosDatos)
-      setCargando(false)
-    }, 1000)
+    const cargarPagos = async () => {
+      try {
+        const q = query(collection(db, "Pagos"))
+        const querySnapshot = await getDocs(q)
+        
+        const pagosData = []
+        querySnapshot.forEach((doc) => {
+          const pagoData = doc.data()
+          pagosData.push({
+            id: doc.id,
+            ...pagoData,
+            fecha: pagoData.fechaPago?.toDate() || new Date()
+          })
+        })
+        
+        setPagos(pagosData)
+        setCargando(false)
+      } catch (error) {
+        console.error("Error cargando pagos:", error)
+        setCargando(false)
+      }
+    }
+
+    cargarPagos()
   }, [])
 
   const getPagosFiltrados = () => {
@@ -42,29 +49,32 @@ export const AdminPagos = () => {
       const terminoBusqueda = busqueda.toLowerCase()
       pagosFiltrados = pagosFiltrados.filter(
         (pago) =>
-          pago.cliente.nombre.toLowerCase().includes(terminoBusqueda) ||
-          pago.cliente.email.toLowerCase().includes(terminoBusqueda) ||
-          pago.id.toLowerCase().includes(terminoBusqueda) ||
-          (pago.referencia && pago.referencia.toLowerCase().includes(terminoBusqueda)),
-      )
-    }
+          pago.resumenReserva?.cliente?.toLowerCase().includes(terminoBusqueda) ||
+          pago.resumenReserva?.email?.toLowerCase().includes(terminoBusqueda) ||
+          pago.id.toLowerCase().includes(terminoBusqueda)
+    )}
 
     return pagosFiltrados
   }
 
-  const marcarComoPagado = (id) => {
-    setPagos((prev) =>
-      prev.map((pago) =>
-        pago.id === id
-          ? {
-              ...pago,
-              estado: "completado",
-              metodoPago: "efectivo",
-              referencia: `REF-${Math.floor(Math.random() * 10000)}`,
-            }
-          : pago,
-      ),
-    )
+  const actualizarEstadoPago = async (idPago, nuevoEstado) => {
+    try {
+      const pagoRef = doc(db, "Pagos", idPago)
+      await updateDoc(pagoRef, {
+        estado: nuevoEstado
+        
+      })
+
+      setPagos(pagos.map(pago => 
+        pago.id === idPago ? { 
+          ...pago, 
+          estado: nuevoEstado
+         
+        } : pago
+      ))
+    } catch (error) {
+      console.error("Error actualizando pago:", error)
+    }
   }
 
   const getColorEstado = (estado) => {
@@ -81,7 +91,7 @@ export const AdminPagos = () => {
   }
 
   const formatFecha = (fecha) => {
-    return new Date(fecha).toLocaleDateString("es-ES", {
+    return fecha.toLocaleDateString("es-ES", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -128,7 +138,7 @@ export const AdminPagos = () => {
               id="busqueda"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              placeholder="Buscar por cliente, ID, referencia..."
+              placeholder="Buscar por cliente, email, ID..."
               className="p-2 border border-gray-300 rounded-md w-full md:w-64"
             />
           </div>
@@ -137,11 +147,11 @@ export const AdminPagos = () => {
         <div className="text-right">
           <span className="block text-sm font-medium text-gray-700 mb-1">Total recaudado</span>
           <span className="text-2xl font-bold">
-            {pagos
-              .filter((p) => p.estado === "completado")
-              .reduce((sum, p) => sum + p.monto, 0)
-              .toFixed(2)}{" "}
-            €
+          {pagos
+            .filter((p) => p.estado === "completado")
+            .reduce((sum, p) => sum + Number(p.total || 0), 0)
+            .toFixed(2)}{" "}
+            Bs
           </span>
         </div>
       </div>
@@ -151,52 +161,28 @@ export const AdminPagos = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   ID Pago
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Reserva
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Cliente
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Teléfono
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Fecha
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Monto
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Total
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Método
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Estado
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Acciones
                 </th>
               </tr>
@@ -204,41 +190,58 @@ export const AdminPagos = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {getPagosFiltrados().map((pago) => (
                 <tr key={pago.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{pago.id}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">#{pago.reservaId}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{pago.cliente.nombre}</div>
-                    <div className="text-sm text-gray-500">{pago.cliente.email}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatFecha(pago.fecha)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {pago.monto.toFixed(2)} €
+                    {pago.id}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      {pago.resumenReserva?.cliente || 'N/A'}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {pago.resumenReserva?.email || 'N/A'}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {pago.metodoPago ? (
-                      pago.metodoPago.charAt(0).toUpperCase() + pago.metodoPago.slice(1)
-                    ) : (
-                      <span className="text-gray-400">-</span>
-                    )}
+                    {pago.resumenReserva?.telefono || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatFecha(pago.fecha)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {Number(pago.total || 0).toFixed(2)} Bs
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {pago.metodoPago || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getColorEstado(pago.estado)}`}
-                    >
-                      {pago.estado.charAt(0).toUpperCase() + pago.estado.slice(1)}
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getColorEstado(pago.estado)}`}>
+                      {pago.estado?.charAt(0).toUpperCase() + pago.estado?.slice(1)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
                       {pago.estado === "pendiente" && (
-                        <button
-                          onClick={() => marcarComoPagado(pago.id)}
-                          className="text-green-600 hover:text-green-900"
-                        >
-                          Marcar como pagado
-                        </button>
+                        <>
+                          <button
+                            onClick={() => actualizarEstadoPago(pago.id, "completado")}
+                            className="text-green-600 hover:text-green-900"
+                          >
+                            Aceptar
+                          </button>
+                          <button
+                            onClick={() => actualizarEstadoPago(pago.id, "cancelado")}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Rechazar
+                          </button>
+                        </>
                       )}
-                      <button className="text-indigo-600 hover:text-indigo-900">Ver detalles</button>
+                      <button
+                        onClick={() => setPagoSeleccionado(pago.id)}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
+                        Ver Detalles
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -263,15 +266,24 @@ export const AdminPagos = () => {
           </div>
           <div className="bg-yellow-50 p-4 rounded-lg">
             <div className="text-sm text-yellow-600">Pendientes</div>
-            <div className="text-2xl font-bold">{pagos.filter((p) => p.estado === "pendiente").length}</div>
+            <div className="text-2xl font-bold">
+              {pagos.filter((p) => p.estado === "pendiente").length}
+            </div>
           </div>
           <div className="bg-green-50 p-4 rounded-lg">
             <div className="text-sm text-green-600">Completados</div>
-            <div className="text-2xl font-bold">{pagos.filter((p) => p.estado === "completado").length}</div>
+            <div className="text-2xl font-bold">
+              {pagos.filter((p) => p.estado === "completado").length}
+            </div>
           </div>
         </div>
       </div>
+      {pagoSeleccionado && (
+        <DetallePago 
+          pagoId={pagoSeleccionado} 
+          onClose={() => setPagoSeleccionado(null)} 
+        />
+      )}
     </div>
   )
 }
-
