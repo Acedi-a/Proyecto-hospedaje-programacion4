@@ -25,65 +25,87 @@ import { Login } from "../pages/user/Login";
 import { Signup } from "../pages/user/Signup";
 import { CrearHabitacion } from "../pages/admin/CrearHabitacion";
 import { EditarHabitacion } from "../pages/admin/EditarHabitacion";
+
 import { auth } from "../data/firebase";
+import { db } from "../data/firebase";
+import { doc, getDoc } from "firebase/firestore";	
+import { UserProvider } from "../context/UserContext"; // ✅ este es el bueno
+
 
 export const MisRutas = () => {
-  const [uid, setUid] = useState(null); // Inicializa como null
-  const [isLoadingAuth, setIsLoadingAuth] = useState(true); // Estado de carga
+  {/*
+  const [user, setUser] = useState(null);
+  const [userData, setUserData] = useState(null);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        console.log("El ID del usuario es: ", user.uid);
-        setUid(user.uid);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user && user.uid) {
+        setUser(user);
+        try {
+          const docSnap = await getDoc(doc(db, "usuarios", user.uid));
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setUserData({
+              uid: user.uid,
+              apellido: data.apellido || "",
+              nombre: data.nombre || "",
+              email: data.email || "",
+              telefono: data.telefono || "",
+              creadoEn: data.creadoEn || null,
+            });
+          }
+        } catch (err) {
+          console.error("Error al obtener datos del usuario:", err);
+        }
       } else {
-        console.log("No hay usuario autenticado");
-        setUid(null); // Asegúrate de limpiar el UID
+        setUser(null);
+        setUserData(null);
       }
-      setIsLoadingAuth(false); // La comprobación ha terminado, actualiza el estado de carga
+      setIsLoadingAuth(false);
     });
 
-    // Cleanup listener on unmount
-    return unsubscribe;
-  }, []); // Solo se ejecuta una vez
+    return () => unsubscribe();
+  }, []);
 
-  // Muestra un indicador de carga mientras se verifica la autenticación
-  if (isLoadingAuth) {
-    // Puedes poner un componente de Spinner o simplemente texto
-    return <div>Cargando autenticación...</div>;
+  if (isLoadingAuth || !userData) {
+    return <div>Cargando datos del usuario...</div>;
   }
+  */}
 
-  return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+  
+  return  (
+    <UserProvider>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
 
-        <Route path="/" element={<UserLayout uid={uid} />}>
-          <Route index element={<Home />} />
-          <Route path="reservas" element={<Reservas />} />
-          <Route path="reservas/nueva" element={<NuevaReserva />} />
-          <Route path="reservas/editar/:id" element={<EditarReserva />} />
-          <Route path="calificaciones" element={<Calificaciones />} />
-          <Route path="calificaciones/nueva" element={<NuevaCalificacion />} />
-          <Route path="servicios" element={<Servicios />} />
-        </Route>
+          <Route path="/" element={<UserLayout />}>
+            <Route index element={<Home />} />
+            <Route path="reservas" element={<Reservas />} />
+            <Route path="reservas/nueva" element={<NuevaReserva />} />
+            <Route path="reservas/editar/:id" element={<EditarReserva />} />
+            <Route path="calificaciones" element={<Calificaciones />} />
+            <Route path="calificaciones/nueva" element={<NuevaCalificacion />} />
+            <Route path="servicios" element={<Servicios />} />
+          </Route>
 
-        {/* Rutas de admin */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} /> 
-          <Route path="habitaciones" element={<Habitaciones />} />
-          <Route path="habitaciones/nueva" element={<AdminNuevaHabitacion />} />
-          <Route path="reservas" element={<AdminReservas />} />
-          <Route path="pagos" element={<AdminPagos />} />
-          <Route path="servicios" element={<AdminServicios />} />
-          <Route path="calificaciones" element={<AdminCalificaciones />} />
-          <Route path="reportes" element={<AdminReportes />} />
-          <Route path="configuracion" element={<AdminConfiguracion />} />
-          <Route path="crear" element={<CrearHabitacion />} />
-          <Route path="editar/:id" element={<EditarHabitacion />} />
-        </Route>
-      </Routes>
-    </Router>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="habitaciones" element={<Habitaciones />} />
+            <Route path="habitaciones/nueva" element={<AdminNuevaHabitacion />} />
+            <Route path="reservas" element={<AdminReservas />} />
+            <Route path="pagos" element={<AdminPagos />} />
+            <Route path="servicios" element={<AdminServicios />} />
+            <Route path="calificaciones" element={<AdminCalificaciones />} />
+            <Route path="reportes" element={<AdminReportes />} />
+            <Route path="configuracion" element={<AdminConfiguracion />} />
+            <Route path="crear" element={<CrearHabitacion />} />
+            <Route path="editar/:id" element={<EditarHabitacion />} />
+          </Route>
+        </Routes>
+      </Router>
+    </UserProvider>
   );
 };

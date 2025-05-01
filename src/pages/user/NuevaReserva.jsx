@@ -6,8 +6,13 @@ import { ReservaPago } from "../../components/user/SeccionReservaPago";
 
 import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "../../data/firebase.jsx";
+import { useOutletContext } from "react-router-dom";
 
 export const NuevaReserva = () => {
+
+  const { userData } = useOutletContext();
+
+
   const [step, setStep] = useState(1);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [formData, setFormData] = useState({
@@ -24,19 +29,17 @@ export const NuevaReserva = () => {
     precioNoche: 0,
     imagenUrl: "",
   });
+  //console.log("DATOS DEL USER:", userData);
 
-  // Manejo de cambios en inputs
   const handleFormChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  // Manejo de fechas
   const handleDateChange = (date, type) =>
     setFormData({
       ...formData,
       [type === "start" ? "fechaInicio" : "fechaFin"]: date,
     });
 
-  // Manejo de selección de servicios
   const handleServiceToggle = (updatedServices) => {
     setFormData({
       ...formData,
@@ -44,7 +47,6 @@ export const NuevaReserva = () => {
     });
   };
 
-  // Cálculo del total
   const calcularTotal = () => {
     if (!formData.fechaInicio || !formData.fechaFin || formData.precioNoche <= 0) return 0;
 
@@ -60,7 +62,6 @@ export const NuevaReserva = () => {
     return precioHabitacion + precioServicios;
   };
 
-  // Seleccionar habitación
   const handleRoomSelect = (habitacion) => {
     setSelectedRoom(habitacion.id);
 
@@ -77,7 +78,6 @@ export const NuevaReserva = () => {
     });
   };
 
-  // Validaciones previas al siguiente paso
   const isNextEnabled = () => {
     switch (step) {
       case 1:
@@ -115,9 +115,9 @@ export const NuevaReserva = () => {
         total: calcularTotal(), 
         estado: "pendiente",
         resumenReserva:{
-          cliente: formData.nombre,
-          email: formData.email,
-          telefono: formData.telefono,
+          cliente: userData.nombre+" "+userData.apellido,
+          email: userData.email,
+          telefono: userData.telefono,
         }
       })
       const idpago = pagoRef.id;
@@ -132,7 +132,7 @@ export const NuevaReserva = () => {
         habitacion: formData.habitacionId,
         idserviciosadicionales: formData.serviciosAdicionales,
         idpago: idpago,
-        idusuario: "iddelapersona",
+        idusuario: userData.uid,
         comentariosAdicionales: formData.comentarios,
       })
       const idReserva = reservaRef.id;
