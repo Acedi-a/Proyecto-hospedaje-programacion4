@@ -51,11 +51,22 @@ export const AdminCalificaciones = () => {
   }
 
   const cambiarEstadoCalificacion = (id, nuevoEstado) => {
+    const fechaCambio = new Date();
     setListaCalificaciones((prev) =>
-      prev.map((calificacion) => (calificacion.id === id ? { ...calificacion, estado: nuevoEstado } : calificacion)),
-    )
-  }
-
+      prev.map((c) =>
+        c.id === id
+          ? {
+              ...c,
+              estado: nuevoEstado,
+              historialCambios: [
+                ...(c.historialCambios || []),
+                { estado: nuevoEstado, fecha: fechaCambio },
+              ],
+            }
+          : c
+      )
+    );
+  };
   const eliminarCalificacion = (id) => {
     if (window.confirm("¿Estás seguro de que deseas eliminar esta calificación?")) {
       setListaCalificaciones((prev) => prev.filter((calificacion) => calificacion.id !== id))
@@ -147,6 +158,7 @@ export const AdminCalificaciones = () => {
             <label htmlFor="filtro" className="block text-sm font-medium text-gray-700 mb-1">
               Filtrar por estado
             </label>
+
             <select
               id="filtro"
               value={filtro}
