@@ -1,10 +1,8 @@
-
 import { useState } from "react";
 import { AdminConfiguracionGeneral } from "../../components/admin/AdminConfiguracionGeneral";
 import { AdminConfiguracionReservasPagos } from "../../components/admin/AdminConfiguracionReservasPagos";
 import { AdminConfiguracionNotificaciones } from "../../components/admin/AdminConfiguracionNotificaciones";
 import { AdminConfiguracionApariencia } from "../../components/admin/AdminConfiguracionApariencia";
-
 
 export const AdminConfiguracion = () => {
     const [configuracion, setConfiguracion] = useState({
@@ -28,14 +26,13 @@ export const AdminConfiguracion = () => {
         pagoTransferencia: true,
         pagoPaypal: false,
         reservaAutomatica: true
-        // --- Fin Estado inicial ---
     });
 
     const [pestanaActiva, setPestanaActiva] = useState('general');
     const [guardando, setGuardando] = useState(false);
     const [mensajeExito, setMensajeExito] = useState('');
 
-    // --- Lógica de manejo de cambios (igual que antes) ---
+    // Lógica de manejo de cambios
     const handleChange = (e) => {
         const { name, value, type, checked, options } = e.target;
         if (type === 'select-multiple') {
@@ -48,7 +45,7 @@ export const AdminConfiguracion = () => {
         }
     };
 
-    // --- Lógica de envío (igual que antes) ---
+    // Lógica de envío
     const handleSubmit = (e) => {
         e.preventDefault();
         setGuardando(true);
@@ -60,17 +57,12 @@ export const AdminConfiguracion = () => {
         }, 1000);
     };
 
-    // --- Datos para selects (igual que antes) ---
     const availableLanguages = [
         { value: 'es', label: 'Español' },
         { value: 'en', label: 'Inglés' },
-        { value: 'fr', label: 'Francés' },
-        { value: 'de', label: 'Alemán' },
-        { value: 'it', label: 'Italiano' },
-        { value: 'pt', label: 'Portugués' },
+
     ];
 
-    // --- Renderizado del componente ---
     return (
         <div className="p-6">
             <h1 className="text-2xl font-bold mb-6">Configuración del Sistema</h1>
@@ -81,11 +73,10 @@ export const AdminConfiguracion = () => {
                 </div>
             )}
 
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-                {/* --- Navegación de Pestañas --- */}
+           
+                {/* Navegación de Pestañas */}
                 <div className="border-b border-gray-200">
                     <nav className="flex -mb-px">
-                        {/* Botón General */}
                         <button
                             type="button"
                             onClick={() => setPestanaActiva('general')}
@@ -93,34 +84,13 @@ export const AdminConfiguracion = () => {
                         >
                             General
                         </button>
-                        {/* Botón Reservas y Pagos */}
-                        <button
-                            type="button"
-                            onClick={() => setPestanaActiva('reservas')}
-                            className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${pestanaActiva === 'reservas' ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-                        >
-                            Reservas y Pagos
-                        </button>
-                         {/* Botón Notificaciones */}
-                        <button
-                            type="button"
-                            onClick={() => setPestanaActiva('notificaciones')}
-                            className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${pestanaActiva === 'notificaciones' ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-                        >
-                            Notificaciones
-                        </button>
-                         {/* Botón Apariencia */}
-                        <button
-                            type="button"
-                            onClick={() => setPestanaActiva('apariencia')}
-                            className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${pestanaActiva === 'apariencia' ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-                        >
-                            Apariencia
-                        </button>
+                        
                     </nav>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6">
+                {/* Formulario único */}
+               
+                    {/* Muestra el contenido según la pestaña activa */}
                     {pestanaActiva === 'general' && (
                         <AdminConfiguracionGeneral
                             configuracion={configuracion}
@@ -128,39 +98,13 @@ export const AdminConfiguracion = () => {
                         />
                     )}
 
-                    {pestanaActiva === 'reservas' && (
-                        <AdminConfiguracionReservasPagos
-                            configuracion={configuracion}
-                            handleChange={handleChange}
-                        />
-                    )}
 
-                    {pestanaActiva === 'notificaciones' && (
-                        <AdminConfiguracionNotificaciones
-                            configuracion={configuracion}
-                            handleChange={handleChange}
-                        />
-                    )}
-
-                    {pestanaActiva === 'apariencia' && (
-                        <AdminConfiguracionApariencia
-                            configuracion={configuracion}
-                            handleChange={handleChange}
-                            availableLanguages={availableLanguages}
-                        />
-                    )}
-
+                    {/* Botón de guardar */}
                     <div className="mt-6 pt-6 border-t border-gray-200">
-                        <button
-                            type="submit"
-                            className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${guardando ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            disabled={guardando}
-                        >
-                            {guardando ? 'Guardando...' : 'Guardar Configuración'}
-                        </button>
+                       
                     </div>
-                </form>
-            </div>
+                
+           
         </div>
     );
 };
