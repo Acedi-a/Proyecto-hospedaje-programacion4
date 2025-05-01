@@ -10,7 +10,8 @@ export const AdminCalificaciones = () => {
   const [filtro, setFiltro] = useState("todas")
   const [busqueda, setBusqueda] = useState("")
   const [activeTab, setActiveTab] = useState("todas")
-  const [filtroEstrellas, setFiltroEstrellas] = useState("all")
+  const [filtroEstrellas, setFiltroEstrellas] = useState("all") // Filtro por estrellas
+  const [detalleSeleccionado, setDetalleSeleccionado] = useState(null); // Modal de detalles
 
   useEffect(() => {
     setTimeout(() => {
@@ -40,6 +41,12 @@ export const AdminCalificaciones = () => {
       )
     }
 
+    if (filtroEstrellas !== "all") {
+      calificacionesFiltradas = calificacionesFiltradas.filter(
+        (c) => c.puntuacion === parseInt(filtroEstrellas)
+      );
+    }
+    
     return calificacionesFiltradas
   }
 
@@ -99,7 +106,37 @@ export const AdminCalificaciones = () => {
       </div>
     )
   }
-
+  {detalleSeleccionado && (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded shadow-lg w-96">
+        <h3 className="text-xl font-semibold mb-4">Detalle de calificación</h3>
+        <p><strong>Usuario:</strong> {detalleSeleccionado.usuario}</p>
+        <p><strong>Puntuación:</strong> {detalleSeleccionado.puntuacion}</p>
+        <p><strong>Comentario:</strong> {detalleSeleccionado.comentario}</p>
+        <p><strong>Fecha:</strong> {new Date(detalleSeleccionado.fechaCreacion).toLocaleString()}</p>
+        <p><strong>Estado actual:</strong> {detalleSeleccionado.estado}</p>
+        {detalleSeleccionado.historialCambios && detalleSeleccionado.historialCambios.length > 0 && (
+          <>
+            <p className="mt-4 font-semibold">Historial de cambios:</p>
+            <ul className="list-disc ml-6">
+              {detalleSeleccionado.historialCambios.map((h, i) => (
+                <li key={i}>
+                  {h.estado} – {new Date(h.fecha).toLocaleString()}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+        <button
+          onClick={() => setDetalleSeleccionado(null)}
+          className="mt-4 text-red-600 hover:underline"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  )}
+  
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Gestión de Calificaciones</h1>
@@ -121,6 +158,16 @@ export const AdminCalificaciones = () => {
               <option value="publicada">Publicadas</option>
               <option value="rechazada">Rechazadas</option>
             </select>
+            <select
+              value={filtroEstrellas}
+              onChange={(e) => setFiltroEstrellas(e.target.value)}
+              className="p-2 border border-gray-300 rounded-md w-full md:w-auto"
+            >
+              <option value="all">Todas las estrellas</option>
+              {[5, 4, 3, 2, 1].map((num) => (
+              <option key={num} value={num}>{num} estrella{num > 1 && 's'}</option>
+              ))}
+            </select> 
           </div>
 
           <div>
@@ -310,7 +357,7 @@ export const AdminCalificaciones = () => {
             <div className="text-2xl font-bold">
               {listaCalificaciones.filter((c) => c.estado === "rechazada").length}
             </div>
-          </div>
+          </div>  
         </div>
       </div>
     </div>
