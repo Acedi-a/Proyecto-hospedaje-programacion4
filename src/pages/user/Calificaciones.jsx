@@ -1,7 +1,7 @@
 // pages/admin/Calificaciones.jsx
 import React, { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../firebase/firebaseConfig";
+import { db } from "../../data/firebase";
 import { FaStar } from "react-icons/fa";
 
 const Calificaciones = () => {
