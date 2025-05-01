@@ -1,541 +1,507 @@
-import { useState, useEffect } from 'react'
-import { collection, getDocs, query, orderBy } from 'firebase/firestore'
-import { db } from '../../data/firebase'
-import { Link } from 'react-router-dom'
-import { Search, PlusCircle, Filter, Bed, Users, Wifi, Coffee, 
-  ShowerHead, Tv, Edit, Eye, Heart, Star, Loader2, 
-  ChevronDown, ArrowUpDown, X } from 'lucide-react'
+import { useState, useEffect } from 'react';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { db } from '../../data/firebase';
+import { Link } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { 
+  Hotel, Search, RefreshCw, ChevronUp, ChevronDown, 
+  Users, Calendar, Bed, WifiIcon, Coffee, CheckCircle, 
+  XCircle, AlertCircle, Plus, Edit, DollarSign
+} from 'lucide-react';
 
 export function Habitaciones() {
-    const [habitaciones, setHabitaciones] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState(null)
-    const [searchTerm, setSearchTerm] = useState('')
-    const [isFilterOpen, setIsFilterOpen] = useState(false)
-    const [priceRange, setPriceRange] = useState([0, 5000])
-    const [selectedServices, setSelectedServices] = useState([])
-    const [capacityFilter, setCapacityFilter] = useState('')
-    const [sortBy, setSortBy] = useState('newest')
+    const [habitaciones, setHabitaciones] = useState([]);
+    const [filteredHabitaciones, setFilteredHabitaciones] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [filtros, setFiltros] = useState({
+        estado: 'todos',
+        capacidad: '',
+        busqueda: '',
+        precioMin: '',
+        precioMax: ''
+    });
 
-    // Servicios disponibles para filtrado
-    const availableServices = [
-        { id: 'wifi', name: 'WiFi', icon: <Wifi size={16} /> },
-        { id: 'tv', name: 'TV', icon: <Tv size={16} /> },
-        { id: 'baño', name: 'Baño privado', icon: <ShowerHead size={16} /> },
-        { id: 'desayuno', name: 'Desayuno', icon: <Coffee size={16} /> }
-    ]
-
-    // Obtener las habitaciones al cargar el componente
     useEffect(() => {
-        const fetchHabitaciones = async () => {
-            try {
-                const q = query(collection(db, 'Habitaciones'), orderBy('createdAt', 'desc'))
-                const querySnapshot = await getDocs(q)
-                
-                const habitacionesData = querySnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    // Asegurar que la URL de la imagen tenga el formato correcto
-                    imagenUrl: doc.data().imagenUrl || `https://uybrvedtaptizpdqbavx.supabase.co/storage/v1/object/public/imagenes/${doc.data().imagenRuta}`
-                }))
-                
-                setHabitaciones(habitacionesData)
-                setLoading(false)
-            } catch (err) {
-                console.error('Error al obtener habitaciones:', err)
-                setError('Error al cargar las habitaciones')
-                setLoading(false)
+        fetchHabitaciones();
+    }, []);
+
+    useEffect(() => {
+        aplicarFiltros();
+    }, [habitaciones, filtros]);
+
+    const fetchHabitaciones = async () => {
+        try {
+            setLoading(true);
+            const q = query(collection(db, 'Habitaciones'), orderBy('createdAt', 'desc'));
+            const querySnapshot = await getDocs(q);
+            
+            const habitacionesData = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                // Asegurar que tengamos un estado definido para cada habitación
+                estado: doc.data().estado || 'disponible',
+                imagenUrl: doc.data().imagenUrl || 
+                    `https://uybrvedtaptizpdqbavx.supabase.co/storage/v1/object/public/imagenes/${doc.data().imagenRuta}`
+            }));
+            
+            setHabitaciones(habitacionesData);
+            toast.success("Habitaciones cargadas correctamente", {
+                position: "top-right",
+                icon: "🏨"
+            });
+        } catch (err) {
+            console.error('Error al obtener habitaciones:', err);
+            setError('Error al cargar las habitaciones');
+            toast.error("Error al cargar las habitaciones", {
+                position: "top-right",
+                icon: "❌"
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const aplicarFiltros = () => {
+        let resultado = [...habitaciones];
+        
+        // Filtrar por estado
+        if (filtros.estado !== 'todos') {
+            resultado = resultado.filter(h => h.estado === filtros.estado);
+        }
+        
+        // Filtrar por capacidad
+        if (filtros.capacidad) {
+            const capacidad = parseInt(filtros.capacidad);
+            if (!isNaN(capacidad)) {
+                resultado = resultado.filter(h => h.capacidad >= capacidad);
             }
         }
-
-        fetchHabitaciones()
-    }, [])
-
-    // Filtrar habitaciones según todos los criterios
-    const filteredHabitaciones = habitaciones.filter(habitacion => {
-        // Filtro por búsqueda de texto
-        const matchesSearch = 
-            habitacion.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            habitacion.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            habitacion.servicios.some(servicio => 
-                servicio.toLowerCase().includes(searchTerm.toLowerCase())
-            )
         
-        // Filtro por precio
-        const matchesPrice = 
-            habitacion.precio >= priceRange[0] && 
-            habitacion.precio <= priceRange[1]
-        
-        // Filtro por servicios
-        const matchesServices = 
-            selectedServices.length === 0 || 
-            selectedServices.every(service => 
-                habitacion.servicios.some(s => 
-                    s.toLowerCase().includes(service.toLowerCase())
-                )
-            )
-        
-        // Filtro por capacidad
-        const matchesCapacity = 
-            capacityFilter === '' || 
-            habitacion.capacidad >= parseInt(capacityFilter)
-        
-        return matchesSearch && matchesPrice && matchesServices && matchesCapacity
-    }).sort((a, b) => {
-        // Ordenamiento
-        switch(sortBy) {
-            case 'price-asc':
-                return a.precio - b.precio
-            case 'price-desc':
-                return b.precio - a.precio
-            case 'capacity':
-                return b.capacidad - a.capacidad
-            default: // newest
-                return new Date(b.createdAt) - new Date(a.createdAt)
+        // Filtrar por precio mínimo
+        if (filtros.precioMin) {
+            const precioMin = parseFloat(filtros.precioMin);
+            if (!isNaN(precioMin)) {
+                resultado = resultado.filter(h => h.precio >= precioMin);
+            }
         }
-    })
-
-    // Restablecer todos los filtros
-    const resetFilters = () => {
-        setPriceRange([0, 5000])
-        setSelectedServices([])
-        setCapacityFilter('')
-        setSortBy('newest')
-        setSearchTerm('')
-    }
-
-    // Toggle de servicio seleccionado
-    const toggleService = (serviceName) => {
-        if (selectedServices.includes(serviceName)) {
-            setSelectedServices(selectedServices.filter(s => s !== serviceName))
-        } else {
-            setSelectedServices([...selectedServices, serviceName])
+        
+        // Filtrar por precio máximo
+        if (filtros.precioMax) {
+            const precioMax = parseFloat(filtros.precioMax);
+            if (!isNaN(precioMax)) {
+                resultado = resultado.filter(h => h.precio <= precioMax);
+            }
         }
-    }
+        
+        // Filtrar por búsqueda (nombre, descripción)
+        if (filtros.busqueda) {
+            const busquedaLower = filtros.busqueda.toLowerCase();
+            resultado = resultado.filter(h => 
+                (h.nombre?.toLowerCase().includes(busquedaLower)) ||
+                (h.descripcion?.toLowerCase().includes(busquedaLower)) ||
+                (h.servicios?.some(servicio => servicio.toLowerCase().includes(busquedaLower)))
+            );
+        }
+        
+        setFilteredHabitaciones(resultado);
+    };
 
-    // Manejador para cambio de precio máximo
-    const handleMaxPriceChange = (e) => {
-        const newMaxPrice = parseInt(e.target.value)
-        setPriceRange([priceRange[0], newMaxPrice])
-    }
+    const handleResetFiltros = () => {
+        setFiltros({
+            estado: 'todos',
+            capacidad: '',
+            busqueda: '',
+            precioMin: '',
+            precioMax: ''
+        });
+        toast.info("Filtros restablecidos", { icon: "🔄" });
+    };
 
-    // Manejador para cambio de precio mínimo
-    const handleMinPriceChange = (e) => {
-        const newMinPrice = parseInt(e.target.value)
-        setPriceRange([newMinPrice, priceRange[1]])
-    }
+    const getEstadoIcon = (estado) => {
+        switch (estado?.toLowerCase()) {
+            case 'disponible':
+                return <CheckCircle className="h-5 w-5 text-teal-500" />;
+            case 'ocupada':
+                return <XCircle className="h-5 w-5 text-rose-500" />;
+            case 'mantenimiento':
+                return <AlertCircle className="h-5 w-5 text-amber-500" />;
+            default:
+                return <CheckCircle className="h-5 w-5 text-teal-500" />;
+        }
+    };
+
+    const getEstadoBadge = (estado) => {
+        switch (estado?.toLowerCase()) {
+            case 'disponible':
+                return "bg-teal-100 text-teal-800 border border-teal-200";
+            case 'ocupada':
+                return "bg-rose-100 text-rose-800 border border-rose-200";
+            case 'mantenimiento':
+                return "bg-amber-100 text-amber-800 border border-amber-200";
+            default:
+                return "bg-gray-100 text-gray-800 border border-gray-200";
+        }
+    };
+
+    const getCardStyle = (estado) => {
+        switch (estado?.toLowerCase()) {
+            case 'disponible':
+                return {
+                    borderColor: '#0d9488', // teal-600
+                    gradientFrom: 'from-teal-50',
+                    gradientTo: 'to-cyan-50',
+                    shadowColor: 'shadow-teal-100'
+                };
+            case 'ocupada':
+                return {
+                    borderColor: '#e11d48', // rose-600
+                    gradientFrom: 'from-rose-50',
+                    gradientTo: 'to-red-50',
+                    shadowColor: 'shadow-rose-100'
+                };
+            case 'mantenimiento':
+                return {
+                    borderColor: '#d97706', // amber-600
+                    gradientFrom: 'from-amber-50',
+                    gradientTo: 'to-yellow-50',
+                    shadowColor: 'shadow-amber-100'
+                };
+            default:
+                return {
+                    borderColor: '#0d9488', // teal-600
+                    gradientFrom: 'from-teal-50',
+                    gradientTo: 'to-cyan-50',
+                    shadowColor: 'shadow-teal-100'
+                };
+        }
+    };
 
     if (loading) return (
-        <div className="flex justify-center items-center h-64">
-            <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />
-            <span className="ml-2 text-blue-500 font-medium">Cargando habitaciones...</span>
+        <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-700"></div>
+            <span className="ml-3 text-lg font-medium text-cyan-700">Cargando habitaciones...</span>
         </div>
-    )
+    );
 
     if (error) return (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded flex items-center">
-            <X className="mr-2" />
-            <span>{error}</span>
+        <div className="flex items-center justify-center py-12">
+            <AlertCircle className="h-8 w-8 text-red-600" />
+            <span className="ml-3 text-lg font-medium text-red-600">{error}</span>
         </div>
-    )
+    );
 
     return (
-        <div className="bg-gray-50 min-h-screen">
-            <div className="container mx-auto px-4 py-8">
-                {/* Cabecera con título y botón de crear */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-800">Nuestras Habitaciones</h1>
-                        <p className="text-gray-600 mt-1">Descubre nuestro catálogo de habitaciones de lujo</p>
-                    </div>
+        <div className="container mx-auto px-4 py-8 bg-gradient-to-br from-cyan-50 to-teal-50 min-h-screen">
+            <ToastContainer theme="colored" />
+            
+            {/* Header con título y botones */}
+            <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between">
+                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-700 to-teal-800 mb-4 md:mb-0">
+                    Gestión de Habitaciones
+                </h1>
+                
+                <div className="flex flex-wrap gap-3">
+                    <button 
+                        onClick={fetchHabitaciones}
+                        className="flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-700 text-white shadow-lg shadow-cyan-200 hover:bg-cyan-800 transition-all transform hover:scale-105"
+                    >
+                        <RefreshCw className="h-5 w-5" />
+                        Actualizar
+                    </button>
+                    
                     <Link 
                         to="/admin/crear"
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition duration-200 flex items-center shadow-md"
+                        className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-teal-600 to-cyan-700 text-white shadow-lg shadow-cyan-200 hover:from-teal-700 hover:to-cyan-800 transition-all transform hover:scale-105"
                     >
-                        <PlusCircle size={18} className="mr-2" />
-                        Crear Nueva Habitación
+                        <Plus className="h-5 w-5" />
+                        Crear Habitación
                     </Link>
                 </div>
+            </div>
 
-                {/* Contenedor principal de filtros y resultados */}
-                <div className="flex flex-col lg:flex-row gap-6">
-                    {/* Panel de filtros para escritorio */}
-                    <div className="hidden lg:block w-64 bg-white p-4 rounded-lg shadow-md h-fit">
-                        <div className="mb-6">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                                <Filter size={18} className="mr-2 text-blue-500" />
-                                Filtros
-                            </h3>
-                            <button 
-                                onClick={resetFilters}
-                                className="text-sm text-blue-600 hover:underline flex items-center"
-                            >
-                                <X size={14} className="mr-1" />
-                                Limpiar filtros
-                            </button>
-                        </div>
-
-                        {/* Filtro de precio */}
-                        <div className="mb-6">
-                            <h4 className="font-medium text-gray-700 mb-2">Rango de precio</h4>
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm text-gray-500">Min: ${priceRange[0]}</span>
-                                <span className="text-sm text-gray-500">Max: ${priceRange[1]}</span>
-                            </div>
-                            <div className="flex items-center mb-2">
-                                <input 
-                                    type="range"
-                                    min="0"
-                                    max="5000"
-                                    step="100"
-                                    value={priceRange[0]}
-                                    onChange={handleMinPriceChange}
-                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                />
-                            </div>
-                            <div className="flex items-center">
-                                <input 
-                                    type="range"
-                                    min="0"
-                                    max="5000"
-                                    step="100"
-                                    value={priceRange[1]}
-                                    onChange={handleMaxPriceChange}
-                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Filtro de capacidad */}
-                        <div className="mb-6">
-                            <h4 className="font-medium text-gray-700 mb-2">Capacidad mínima</h4>
-                            <select
-                                value={capacityFilter}
-                                onChange={(e) => setCapacityFilter(e.target.value)}
-                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                            >
-                                <option value="">Cualquiera</option>
-                                <option value="1">1 persona</option>
-                                <option value="2">2 personas</option>
-                                <option value="3">3 personas</option>
-                                <option value="4">4 personas</option>
-                                <option value="5">5+ personas</option>
-                            </select>
-                        </div>
-
-                        {/* Filtro de servicios */}
-                        <div className="mb-6">
-                            <h4 className="font-medium text-gray-700 mb-2">Servicios</h4>
-                            <div className="space-y-2">
-                                {availableServices.map(service => (
-                                    <div 
-                                        key={service.id}
-                                        className={`flex items-center p-2 rounded-md cursor-pointer transition-colors ${
-                                            selectedServices.includes(service.name) 
-                                            ? 'bg-blue-100 text-blue-700' 
-                                            : 'hover:bg-gray-100'
-                                        }`}
-                                        onClick={() => toggleService(service.name)}
-                                    >
-                                        <div className="mr-2">{service.icon}</div>
-                                        <span>{service.name}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Ordenar por */}
-                        <div>
-                            <h4 className="font-medium text-gray-700 mb-2">Ordenar por</h4>
-                            <select
-                                value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value)}
-                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                            >
-                                <option value="newest">Más recientes</option>
-                                <option value="price-asc">Precio: menor a mayor</option>
-                                <option value="price-desc">Precio: mayor a menor</option>
-                                <option value="capacity">Mayor capacidad</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Contenido principal */}
-                    <div className="flex-1">
-                        {/* Barra de búsqueda y botones de filtro móvil */}
-                        <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-                            <div className="flex flex-col md:flex-row gap-4">
-                                {/* Barra de búsqueda */}
-                                <div className="relative flex-1">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <Search size={18} className="text-gray-400" />
-                                    </div>
-                                    <input
-                                        type="text"
-                                        placeholder="Buscar por nombre, descripción o servicios..."
-                                        className="w-full pl-10 p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                    />
-                                </div>
-                                
-                                {/* Botón de filtros para móvil */}
-                                <button 
-                                    className="lg:hidden bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md flex items-center justify-center transition"
-                                    onClick={() => setIsFilterOpen(!isFilterOpen)}
-                                >
-                                    <Filter size={18} className="mr-2" />
-                                    Filtros
-                                    <ChevronDown size={18} className={`ml-1 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
-                                </button>
-                                
-                                {/* Selector de ordenamiento para escritorio */}
-                                <div className="hidden md:flex items-center">
-                                    <div className="mr-2 text-gray-600">
-                                        <ArrowUpDown size={16} />
-                                    </div>
-                                    <select
-                                        value={sortBy}
-                                        onChange={(e) => setSortBy(e.target.value)}
-                                        className="p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                                    >
-                                        <option value="newest">Más recientes</option>
-                                        <option value="price-asc">Precio: menor a mayor</option>
-                                        <option value="price-desc">Precio: mayor a menor</option>
-                                        <option value="capacity">Mayor capacidad</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            {/* Panel de filtros para móvil (desplegable) */}
-                            {isFilterOpen && (
-                                <div className="lg:hidden mt-4 pt-4 border-t border-gray-200">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {/* Filtro de precio */}
-                                        <div className="mb-4">
-                                            <h4 className="font-medium text-gray-700 mb-2">Rango de precio</h4>
-                                            <div className="flex justify-between mb-1">
-                                                <span className="text-sm">${priceRange[0]}</span>
-                                                <span className="text-sm">${priceRange[1]}</span>
-                                            </div>
-                                            <div className="flex flex-col gap-2">
-                                                <input 
-                                                    type="range"
-                                                    min="0"
-                                                    max="5000"
-                                                    step="100"
-                                                    value={priceRange[0]}
-                                                    onChange={handleMinPriceChange}
-                                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                                />
-                                                <input 
-                                                    type="range"
-                                                    min="0"
-                                                    max="5000"
-                                                    step="100"
-                                                    value={priceRange[1]}
-                                                    onChange={handleMaxPriceChange}
-                                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Filtro de capacidad */}
-                                        <div className="mb-4">
-                                            <h4 className="font-medium text-gray-700 mb-2">Capacidad mínima</h4>
-                                            <select
-                                                value={capacityFilter}
-                                                onChange={(e) => setCapacityFilter(e.target.value)}
-                                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                                            >
-                                                <option value="">Cualquiera</option>
-                                                <option value="1">1 persona</option>
-                                                <option value="2">2 personas</option>
-                                                <option value="3">3 personas</option>
-                                                <option value="4">4 personas</option>
-                                                <option value="5">5+ personas</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    {/* Filtro de servicios */}
-                                    <div className="mb-4">
-                                        <h4 className="font-medium text-gray-700 mb-2">Servicios</h4>
-                                        <div className="flex flex-wrap gap-2">
-                                            {availableServices.map(service => (
-                                                <div 
-                                                    key={service.id}
-                                                    className={`flex items-center px-3 py-2 rounded-full cursor-pointer transition-colors ${
-                                                        selectedServices.includes(service.name) 
-                                                        ? 'bg-blue-100 text-blue-700 border border-blue-300' 
-                                                        : 'bg-gray-100 hover:bg-gray-200 border border-gray-200'
-                                                    }`}
-                                                    onClick={() => toggleService(service.name)}
-                                                >
-                                                    <div className="mr-2">{service.icon}</div>
-                                                    <span className="text-sm">{service.name}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Botones de acción */}
-                                    <div className="flex justify-between mt-4">
-                                        <button 
-                                            onClick={resetFilters}
-                                            className="text-blue-600 hover:text-blue-800"
-                                        >
-                                            Limpiar filtros
-                                        </button>
-                                        <button 
-                                            onClick={() => setIsFilterOpen(false)}
-                                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
-                                        >
-                                            Aplicar filtros
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Contador de resultados */}
-                        <div className="mb-4 flex justify-between items-center">
-                            <p className="text-gray-600">
-                                {filteredHabitaciones.length} 
-                                {filteredHabitaciones.length === 1 ? ' habitación encontrada' : ' habitaciones encontradas'}
-                            </p>
-                            {(searchTerm || selectedServices.length > 0 || capacityFilter || priceRange[0] > 0 || priceRange[1] < 5000) && (
-                                <button 
-                                    onClick={resetFilters}
-                                    className="text-sm text-blue-600 hover:underline flex items-center"
-                                >
-                                    <X size={14} className="mr-1" />
-                                    Limpiar filtros
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Listado de habitaciones */}
-                        {filteredHabitaciones.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                                {filteredHabitaciones.map(habitacion => (
-                                    <div key={habitacion.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition duration-300 group">
-                                        {/* Imagen de la habitación con overlay */}
-                                        <div className="relative h-48 overflow-hidden">
-                                            <div className="absolute top-2 right-2 z-10">
-                                                <button className="bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition">
-                                                    <Heart size={18} className="text-gray-500 hover:text-red-500 transition" />
-                                                </button>
-                                            </div>
-                                            <img 
-                                                src={habitacion.imagenUrl} 
-                                                alt={habitacion.nombre}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                                onError={(e) => {
-                                                    e.target.src = 'https://via.placeholder.com/400x300?text=Imagen+no+disponible'
-                                                }}
-                                            />
-                                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent h-20 pointer-events-none"></div>
-                                            <div className="absolute bottom-2 left-2 text-white flex items-center">
-                                                <div className="flex items-center bg-black/50 p-1 px-2 rounded">
-                                                    <Star size={14} className="text-yellow-400 mr-1" fill="#FBBF24" />
-                                                    <span className="text-xs font-medium">4.8</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        {/* Información de la habitación */}
-                                        <div className="p-4">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <h2 className="text-xl font-bold text-gray-800">{habitacion.nombre}</h2>
-                                                <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
-                                                    ${habitacion.precio}/noche
-                                                </span>
-                                            </div>
-                                            
-                                            <p className="text-gray-600 mb-3 line-clamp-2 text-sm">{habitacion.descripcion}</p>
-                                            
-                                            <div className="flex items-center mb-3 space-x-4">
-                                                <div className="flex items-center text-gray-700">
-                                                    <Users size={16} className="mr-1 text-blue-500" />
-                                                    <span className="text-sm">{habitacion.capacidad} personas</span>
-                                                </div>
-                                                <div className="flex items-center text-gray-700">
-                                                    <Bed size={16} className="mr-1 text-blue-500" />
-                                                    <span className="text-sm">{habitacion.camas} camas</span>
-                                                </div>
-                                            </div>
-                                            
-                                            {/* Servicios */}
-                                            <div className="mb-4">
-                                                <h3 className="text-xs font-medium text-gray-500 mb-2">Servicios:</h3>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {habitacion.servicios.slice(0, 3).map((servicio, index) => (
-                                                        <span 
-                                                            key={index} 
-                                                            className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full"
-                                                        >
-                                                            {servicio}
-                                                        </span>
-                                                    ))}
-                                                    {habitacion.servicios.length > 3 && (
-                                                        <span className="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded-full">
-                                                            +{habitacion.servicios.length - 3} más
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            
-                                            {/* Botones de acción */}
-                                            <div className="flex justify-between pt-3 border-t border-gray-200">
-                                                <Link
-                                                    to={`/admin/editar/${habitacion.id}`}
-                                                    className="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center"
-                                                >
-                                                    <Edit size={14} className="mr-1" />
-                                                    Editar
-                                                </Link>
-                                                <Link
-                                                    to={`/habitaciones/${habitacion.id}`}
-                                                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm flex items-center transition"
-                                                >
-                                                    <Eye size={14} className="mr-1" />
-                                                    Ver detalles
-                                                </Link>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="bg-white rounded-lg shadow-md py-10 px-4 text-center">
-                                <div className="mb-4 text-gray-400">
-                                    <Bed size={48} className="mx-auto" />
-                                </div>
-                                <p className="text-gray-500 text-lg mb-2">
-                                    {searchTerm || selectedServices.length > 0 || capacityFilter || priceRange[0] > 0 || priceRange[1] < 5000 ? 
-                                        'No se encontraron habitaciones con esos criterios' : 
-                                        'No hay habitaciones registradas aún'}
-                                </p>
-                                <p className="text-gray-400 mb-6">
-                                    {searchTerm || selectedServices.length > 0 || capacityFilter || priceRange[0] > 0 || priceRange[1] < 5000 ? 
-                                        'Prueba a ajustar los filtros para ver más resultados' : 
-                                        'Crea tu primera habitación para comenzar'}
-                                </p>
-                                {!searchTerm && selectedServices.length === 0 && !capacityFilter && priceRange[0] === 0 && priceRange[1] === 5000 && (
-                                    <Link 
-                                        to="/habitaciones/crear"
-                                        className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow transition flex items-center justify-center mx-auto w-auto"
-                                    >
-                                        <PlusCircle size={18} className="mr-2" />
-                                        Crear primera habitación
-                                    </Link>
-                                )}
-                            </div>
-                        )}
+            {/* Mini navbar para filtrado por estado */}
+            <div className="mb-6">
+                <div className="flex justify-center overflow-x-auto">
+                    <div className="inline-flex bg-white rounded-full shadow-md p-1">
+                        <button
+                            onClick={() => setFiltros({...filtros, estado: 'todos'})}
+                            className={`px-5 py-2 rounded-full transition-all ${
+                                filtros.estado === 'todos' 
+                                ? 'bg-gradient-to-r from-teal-600 to-cyan-700 text-white shadow-md' 
+                                : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                        >
+                            Todas
+                        </button>
+                        <button
+                            onClick={() => setFiltros({...filtros, estado: 'disponible'})}
+                            className={`px-5 py-2 rounded-full flex items-center gap-1 transition-all ${
+                                filtros.estado === 'disponible' 
+                                ? 'bg-teal-500 text-white shadow-md' 
+                                : 'text-teal-600 hover:bg-teal-50'
+                            }`}
+                        >
+                            <CheckCircle className="h-4 w-4" />
+                            Disponibles
+                        </button>
+                        <button
+                            onClick={() => setFiltros({...filtros, estado: 'ocupada'})}
+                            className={`px-5 py-2 rounded-full flex items-center gap-1 transition-all ${
+                                filtros.estado === 'ocupada' 
+                                ? 'bg-rose-500 text-white shadow-md' 
+                                : 'text-rose-600 hover:bg-rose-50'
+                            }`}
+                        >
+                            <XCircle className="h-4 w-4" />
+                            Ocupadas
+                        </button>
+                        <button
+                            onClick={() => setFiltros({...filtros, estado: 'mantenimiento'})}
+                            className={`px-5 py-2 rounded-full flex items-center gap-1 transition-all ${
+                                filtros.estado === 'mantenimiento' 
+                                ? 'bg-amber-500 text-white shadow-md' 
+                                : 'text-amber-600 hover:bg-amber-50'
+                            }`}
+                        >
+                            <AlertCircle className="h-4 w-4" />
+                            Mantenimiento
+                        </button>
                     </div>
                 </div>
             </div>
+            
+            {/* Panel de filtros adicionales */}
+            <div className="bg-white rounded-xl shadow-xl p-6 mb-8 border border-cyan-100 transition-all">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Capacidad mínima</label>
+                        <div className="relative">
+                            <input
+                                type="number"
+                                min="1"
+                                value={filtros.capacidad}
+                                onChange={(e) => setFiltros({...filtros, capacidad: e.target.value})}
+                                placeholder="Personas"
+                                className="w-full rounded-lg border border-gray-300 pl-10 pr-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                            />
+                            <Users className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Precio mínimo</label>
+                        <div className="relative">
+                            <input
+                                type="number"
+                                min="0"
+                                value={filtros.precioMin}
+                                onChange={(e) => setFiltros({...filtros, precioMin: e.target.value})}
+                                placeholder="Desde $"
+                                className="w-full rounded-lg border border-gray-300 pl-10 pr-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                            />
+                            <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Precio máximo</label>
+                        <div className="relative">
+                            <input
+                                type="number"
+                                min="0"
+                                value={filtros.precioMax}
+                                onChange={(e) => setFiltros({...filtros, precioMax: e.target.value})}
+                                placeholder="Hasta $"
+                                className="w-full rounded-lg border border-gray-300 pl-10 pr-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                            />
+                            <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={filtros.busqueda}
+                                onChange={(e) => setFiltros({...filtros, busqueda: e.target.value})}
+                                placeholder="Nombre, descripción..."
+                                className="w-full rounded-lg border border-gray-300 pl-10 pr-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                            />
+                            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="mt-4 flex justify-end">
+                    <button
+                        onClick={handleResetFiltros}
+                        className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all"
+                    >
+                        <RefreshCw className="h-4 w-4" />
+                        Resetear filtros
+                    </button>
+                </div>
+            </div>
+            
+            {/* Indicadores de filtros activos */}
+            {(filtros.estado !== 'todos' || filtros.capacidad || filtros.precioMin || filtros.precioMax || filtros.busqueda) && (
+                <div className="mb-4 flex justify-between items-center">
+                    <p className="text-gray-700 font-medium">
+                        <span className="text-cyan-700 font-bold">{filteredHabitaciones.length}</span> habitaciones encontradas
+                    </p>
+                    <div className="text-sm text-gray-500 flex flex-wrap gap-2">
+                        {filtros.capacidad && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800">
+                                Min. {filtros.capacidad} personas
+                            </span>
+                        )}
+                        {(filtros.precioMin || filtros.precioMax) && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-cyan-100 text-cyan-800">
+                                Precio: {filtros.precioMin ? `$${filtros.precioMin}` : '$0'} 
+                                {filtros.precioMax ? ` - $${filtros.precioMax}` : ' +'}
+                            </span>
+                        )}
+                        {filtros.busqueda && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800">
+                                Búsqueda: {filtros.busqueda}
+                            </span>
+                        )}
+                    </div>
+                </div>
+            )}
+            
+            {/* Listado de habitaciones */}
+            {filteredHabitaciones.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredHabitaciones.map(habitacion => {
+                        const cardStyle = getCardStyle(habitacion.estado);
+                        return (
+                            <div 
+                                key={habitacion.id} 
+                                className={`bg-gradient-to-br ${cardStyle.gradientFrom} ${cardStyle.gradientTo} rounded-xl ${cardStyle.shadowColor} shadow-lg overflow-hidden border transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl`}
+                                style={{ borderColor: cardStyle.borderColor, borderWidth: '2px' }}
+                            >
+                                {/* Etiqueta de estado */}
+                                <div className="absolute z-10 left-4 top-4">
+                                    <span className={`flex items-center gap-1 px-3 py-1 rounded-full shadow-md ${getEstadoBadge(habitacion.estado)}`}>
+                                        {getEstadoIcon(habitacion.estado)}
+                                        <span className="text-sm font-medium">{habitacion.estado || 'Disponible'}</span>
+                                    </span>
+                                </div>
+                                
+                                {/* Imagen */}
+                                <div className="relative h-48 overflow-hidden border-b" style={{ borderColor: cardStyle.borderColor }}>
+                                    <div 
+                                        className="absolute inset-0 opacity-10" 
+                                        style={{ backgroundColor: cardStyle.borderColor }}
+                                    ></div>
+                                    <img 
+                                        src={habitacion.imagenUrl} 
+                                        alt={habitacion.nombre}
+                                        className="w-full h-full object-cover transition-all duration-500 hover:scale-110 relative z-0"
+                                        onError={(e) => {
+                                            e.target.src = 'https://via.placeholder.com/400x300?text=Imagen+no+disponible';
+                                        }}
+                                    />
+                                </div>
+                                
+                                {/* Contenido */}
+                                <div className="p-5">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <h2 className="text-xl font-bold text-gray-800">{habitacion.nombre}</h2>
+                                        <span className="flex items-center gap-1 bg-gradient-to-r from-teal-600 to-cyan-700 text-white text-sm font-medium px-3 py-1 rounded-full shadow-sm">
+                                            <DollarSign className="h-4 w-4" />
+                                            {habitacion.precio}/noche
+                                        </span>
+                                    </div>
+                                    
+                                    <p className="text-gray-600 mb-4">{habitacion.descripcion}</p>
+                                    
+                                    <div className="grid grid-cols-2 gap-3 mb-4">
+                                        <div className="flex items-center">
+                                            <Users className="h-5 w-5 text-cyan-600 mr-2" />
+                                            <div>
+                                                <p className="text-xs text-gray-500">Capacidad</p>
+                                                <p className="font-medium">{habitacion.capacidad} personas</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center">
+                                            <Bed className="h-5 w-5 text-cyan-600 mr-2" />
+                                            <div>
+                                                <p className="text-xs text-gray-500">Camas</p>
+                                                <p className="font-medium">{habitacion.camas} camas</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Servicios */}
+                                    <div className="mb-4">
+                                        <h3 className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                                            <Coffee className="h-4 w-4 text-teal-600 mr-1" />
+                                            Servicios incluidos:
+                                        </h3>
+                                        <div className="flex flex-wrap gap-2">
+                                            {habitacion.servicios?.map((servicio, index) => (
+                                                <span 
+                                                    key={index} 
+                                                    className="bg-cyan-50 text-cyan-700 text-xs px-2.5 py-1 rounded-full border border-cyan-100"
+                                                >
+                                                    {servicio}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Botones de acción */}
+                                    <div className="pt-3 border-t border-gray-200 flex justify-end">
+                                        <Link
+                                            to={`/admin/editar/${habitacion.id}`}
+                                            className="flex items-center gap-1 px-4 py-1.5 bg-gradient-to-r from-teal-600 to-cyan-700 text-white text-sm rounded-full hover:from-teal-700 hover:to-cyan-800 transition shadow-md hover:shadow-lg transform hover:scale-105"
+                                        >
+                                            <Edit className="h-4 w-4" />
+                                            Editar habitación
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div className="bg-white rounded-xl shadow-lg p-10 text-center">
+                    <Hotel className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <h2 className="text-2xl font-semibold text-gray-700 mb-2">
+                        No hay habitaciones disponibles
+                    </h2>
+                    <p className="text-gray-500 mb-6">
+                        {filtros.estado !== 'todos' || filtros.capacidad || filtros.precioMin || filtros.precioMax || filtros.busqueda ? 
+                            'No se encontraron habitaciones que coincidan con los filtros aplicados.' : 
+                            'No hay habitaciones registradas aún.'}
+                    </p>
+                    <div className="flex justify-center gap-4">
+                        {filtros.estado !== 'todos' || filtros.capacidad || filtros.precioMin || filtros.precioMax || filtros.busqueda ? (
+                            <button
+                                onClick={handleResetFiltros}
+                                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition"
+                            >
+                                <RefreshCw className="h-4 w-4" />
+                                Resetear filtros
+                            </button>
+                        ) : (
+                            <Link 
+                                to="/admin/crear"
+                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-600 to-cyan-700 text-white rounded-full hover:from-teal-700 hover:to-cyan-800 transition shadow-md"
+                            >
+                                <Plus className="h-5 w-5" />
+                                Crear primera habitación
+                            </Link>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
-    )
+    );
 }
