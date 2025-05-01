@@ -4,7 +4,7 @@ export const ServicioTabla = ({ servicios = [], editarServicio, eliminarServicio
     if (isNaN(numericPrice)) {
       return 'N/A'; 
     }
-    return numericPrice.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+    return numericPrice.toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
   };
 
   return (

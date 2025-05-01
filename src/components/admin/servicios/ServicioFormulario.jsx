@@ -13,7 +13,7 @@ export const ServicioFormulario = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [imagenTemporal, setImagenTemporal] = useState(null);
-  const [inputKey, setInputKey] = useState(Date.now()); // Para resetear el input file
+  const [inputKey, setInputKey] = useState(Date.now()); 
 
   useEffect(() => {
     if (servicioEditando?.imagenUrl) {
@@ -25,7 +25,6 @@ export const ServicioFormulario = ({
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validaciones de imagen
     if (!file.type.match(/image\/(jpeg|png|webp)/)) {
       setError('Formato no válido. Sube JPEG, PNG o WebP');
       return;
@@ -40,7 +39,6 @@ export const ServicioFormulario = ({
     setArchivoImagen(file);
     setImagenTemporal(file);
 
-    // Vista previa
     const reader = new FileReader();
     reader.onloadend = () => setPreviewURL(reader.result);
     reader.readAsDataURL(file);
@@ -54,7 +52,6 @@ export const ServicioFormulario = ({
       [name]: type === 'checkbox' ? checked : value
     }));
 
-    // Mantener la imagen temporal cuando otros campos cambian
     if (imagenTemporal) {
       const reader = new FileReader();
       reader.onloadend = () => setPreviewURL(reader.result);
@@ -80,7 +77,7 @@ export const ServicioFormulario = ({
     setPreviewURL(null);
     setArchivoImagen(null);
     setImagenTemporal(null);
-    setInputKey(Date.now()); // Forzar reset del input file
+    setInputKey(Date.now());
     
     if (servicioEditando.imagenUrl) {
       setServicioEditando(prev => ({
@@ -100,24 +97,20 @@ export const ServicioFormulario = ({
       let servicioActualizado = { ...servicioEditando };
       let imagenRutaOriginal = servicioEditando.imagenRuta;
 
-      // Si hay nueva imagen, subirla
       if (archivoImagen) {
         const { ruta, url } = await subirImagen(archivoImagen);
         servicioActualizado.imagenRuta = ruta;
         servicioActualizado.imagenUrl = url;
 
-        // Eliminar imagen anterior si existía
         if (imagenRutaOriginal) {
           await eliminarImagen(imagenRutaOriginal);
         }
       } else if (previewURL === null && servicioEditando.imagenUrl) {
-        // Si se eliminó la imagen existente
         await eliminarImagen(servicioEditando.imagenRuta);
         servicioActualizado.imagenRuta = null;
         servicioActualizado.imagenUrl = null;
       }
 
-      // Guardar en Firestore
       await guardar(servicioActualizado);
     } catch (error) {
       console.error('Error:', error);
@@ -128,11 +121,21 @@ export const ServicioFormulario = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl">
-        <h2 className="text-xl font-bold mb-4">
-          {servicioEditando.id ? "Editar Servicio" : "Crear Nuevo Servicio"}
-        </h2>
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl border border-gray-200">
+        <div className="flex justify-between items-start mb-4">
+          <h2 className="text-xl font-bold text-gray-800">
+            {servicioEditando.id ? "Editar Servicio" : "Crear Nuevo Servicio"}
+          </h2>
+          <button
+            onClick={cancelar}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
         
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
@@ -170,11 +173,11 @@ export const ServicioFormulario = ({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Precio (€) *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Precio (Bs) *</label>
               <input
                 type="number"
                 name="precio"
-                value={servicioEditando.precio }
+                value={servicioEditando.precio}
                 onChange={handlePrecioChange}
                 className="p-2 border border-gray-300 rounded-md w-full"
                 required
@@ -194,7 +197,6 @@ export const ServicioFormulario = ({
             />
           </div>
 
-          {/* Campo de imagen */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Imagen del servicio
