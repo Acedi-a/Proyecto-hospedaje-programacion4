@@ -1,4 +1,4 @@
-
+import { Wrench, Briefcase, Settings } from "lucide-react";
 export const ServicioTabla = ({ servicios = [], editarServicio, eliminarServicio }) => {
   const formatPrice = (price) => {
     const numericPrice = Number(price);
@@ -15,6 +15,7 @@ export const ServicioTabla = ({ servicios = [], editarServicio, eliminarServicio
           <thead className="bg-gray-50">
             <tr>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Servicio</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
             </tr>
@@ -22,6 +23,7 @@ export const ServicioTabla = ({ servicios = [], editarServicio, eliminarServicio
           <tbody className="bg-white divide-y divide-gray-200">
             {servicios.map((servicio) => (
               <tr key={servicio.id}>
+                {/* Servicio */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10">
@@ -38,17 +40,24 @@ export const ServicioTabla = ({ servicios = [], editarServicio, eliminarServicio
                       </div>
                       {servicio.descripcion && (
                         <div className="text-sm text-gray-500 max-w-xs truncate" title={servicio.descripcion}>
-                           {servicio.descripcion}
+                          {servicio.descripcion}
                         </div>
                       )}
                     </div>
                   </div>
                 </td>
 
+                {/* Categoría */}
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 capitalize">
+                  {servicio.categoria || 'Sin categoría'}
+                </td>
+
+                {/* Precio */}
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {formatPrice(servicio.precio)}
                 </td>
 
+                {/* Acciones */}
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex items-center space-x-3">
                     <button

@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react"
-import { ServicioFiltroBusqueda } from "../../components/admin/Servicios/ServicioFiltroBusqueda"
-import { ServicioTabla } from "../../components/admin/Servicios/ServicioTabla"
-import { ServicioFormulario } from "../../components/admin/Servicios/ServicioFormulario"
+
 import { serviciosData } from "../../data/servicios"
+import { ServicioFiltroBusqueda } from "../../components/admin/servicios/ServicioFiltroBusqueda"
+import { ServicioTabla } from "../../components/admin/servicios/ServicioTabla"
+import { ServicioFormulario } from "../../components/admin/servicios/ServicioFormulario"
+import {db} from '../../data/firebase'
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore'
 
 
 
@@ -16,39 +19,56 @@ export const AdminServicios = () => {
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
 
   useEffect(() => {
-    setListaServicios(serviciosData)
-    setTimeout(() => setCargando(false), 500)
-  }, [serviciosData])
+    const refServicios = collection(db, "Servicios")
+    const unsubscribe = onSnapshot(refServicios, (snapshot) => {
+      const serviciosFirestore = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+      setListaServicios(serviciosFirestore)
+      setCargando(false)
+    })
+  
+    return () => unsubscribe()
+  }, [])
+  
 
   const serviciosFiltrados = listaServicios
-    .filter((servicio) => {
-      if (filtro === "disponibles") return servicio.disponible
-      if (filtro === "no-disponibles") return !servicio.disponible
-      return true
-    })
-    .filter((servicio) => {
-      const termino = busqueda.toLowerCase()
-      return (
-        servicio.nombre.toLowerCase().includes(termino) ||
-        servicio.descripcion.toLowerCase().includes(termino)
-      )
-    })
-
-  const cambiarDisponibilidad = (id) => {
-    setListaServicios((prev) =>
-      prev.map((servicio) =>
-        servicio.id === id
-          ? { ...servicio, disponible: !servicio.disponible }
-          : servicio
-      )
+  .filter((servicio) => {
+    if (filtro === "disponibles") return servicio.estado === true
+    if (filtro === "no-disponibles") return servicio.estado === false
+    return true // "todos"
+  })
+  .filter((servicio) => {
+    const termino = busqueda.toLowerCase()
+    return (
+      servicio.nombre.toLowerCase().includes(termino) ||
+      servicio.descripcion.toLowerCase().includes(termino)
     )
-  }
+  })
 
-  const eliminarServicio = (id) => {
+
+    const cambiarDisponibilidad = async (id) => {
+      try {
+        const ref = doc(db, "Servicios", id)
+        const servicio = listaServicios.find((s) => s.id === id)
+        await updateDoc(ref, { disponible: !servicio.disponible })
+      } catch (error) {
+        console.error("Error al cambiar disponibilidad:", error)
+      }
+    }
+    
+
+  const eliminarServicio = async (id) => {
     if (confirm("¿Deseas eliminar este servicio?")) {
-      setListaServicios((prev) => prev.filter((servicio) => servicio.id !== id))
+      try {
+        await deleteDoc(doc(db, "Servicios", id))
+      } catch (error) {
+        console.error("Error al eliminar el servicio:", error)
+      }
     }
   }
+  
 
   const editarServicio = (servicio) => {
     setServicioEditando(servicio)
@@ -57,37 +77,43 @@ export const AdminServicios = () => {
 
   const crearNuevoServicio = () => {
     setServicioEditando({
-      id: "", 
       nombre: "",
       descripcion: "",
-      imagen: "/placeholder.svg?height=200&width=300",
-      icono: null,
       precio: 0,
-      duracion: 0,
       categoria: "general",
-      disponible: true,
-      solicitudes: 0,
-      ultimaActualizacion: new Date(),
+      estado: true
     })
     setMostrarFormulario(true)
   }
 
-  const guardarNuevoServicio = (e) => {
+  const guardarNuevoServicio = async (e) => {
     e.preventDefault()
-    setListaServicios((prev) => [...prev, servicioEditando])
-    cerrarFormulario()
+    try {
+      await addDoc(collection(db, "Servicios"), {
+        ...servicioEditando
+      })
+      cerrarFormulario()
+    } catch (error) {
+      console.error("Error al crear el servicio:", error)
+    }
   }
+  
 
-  const guardarServicio = (e) => {
+  const guardarServicio = async (e) => {
     e.preventDefault()
-    setListaServicios((prev) =>
-      prev.map((servicio) =>
-        servicio.id === servicioEditando.id ? servicioEditando : servicio
-      )
-    )
-    cerrarFormulario()
+    try {
+      const { id, ...resto } = servicioEditando
+      const ref = doc(db, "Servicios", id)
+      await updateDoc(ref, {
+        ...resto
+      })
+      cerrarFormulario()
+    } catch (error) {
+      console.error("Error al actualizar el servicio:", error)
+    }
   }
-
+  
+  
   const cerrarFormulario = () => {
     setServicioEditando(null)
     setMostrarFormulario(false)
@@ -124,19 +150,18 @@ export const AdminServicios = () => {
               Crear Servicio
             </button>
           </div>
-
           <ServicioTabla
-            servicios={serviciosFiltrados}
-            cambiarDisponibilidad={cambiarDisponibilidad}
-            editarServicio={editarServicio}
-            eliminarServicio={eliminarServicio}
+          servicios={serviciosFiltrados}
+          cambiarDisponibilidad={cambiarDisponibilidad}
+          editarServicio={editarServicio}
+          eliminarServicio={eliminarServicio}
           />
         </>
       )}
 
       {mostrarFormulario && servicioEditando && (
         <ServicioFormulario
-          servicioEditando={servicioEditando}
+        servicioEditando={servicioEditando}
           setServicioEditando={setServicioEditando}
           guardar={servicioEditando.id ? guardarServicio : guardarNuevoServicio}
           cancelar={cerrarFormulario}
