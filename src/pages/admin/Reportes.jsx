@@ -18,6 +18,8 @@ export const AdminReportes = () => {
     }, 1000)
   }, [periodoSeleccionado])
 
+  //es que no entenderxd
+
   const generarDatos = () => {
     const fechaActual = new Date()
     const etiquetas = []
