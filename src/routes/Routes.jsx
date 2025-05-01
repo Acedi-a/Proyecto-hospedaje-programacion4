@@ -30,6 +30,8 @@ import { doc, getDoc } from "firebase/firestore";
 import { UserProvider } from "../context/UserContext"; // ✅ este es el bueno
 import ListarReservas from "../pages/admin/ListarReservas";
 import Calificaciones from "../pages/user/Calificaciones";
+import AdminCalificaciones from "../pages/admin/Calificaciones";
+
 
 
 export const MisRutas = () => {
@@ -86,6 +88,10 @@ export const MisRutas = () => {
             <Route path="reservas" element={<Reservas />} />
             <Route path="reservas/nueva" element={<NuevaReserva />} />
             <Route path="reservas/editar/:id" element={<EditarReserva />} />
+
+
+            <Route path="calificaciones" element={<Calificaciones />} />
+
             <Route path="calificaciones/nueva" element={<NuevaCalificacion />} />
             <Route path="servicios" element={<Servicios />} />
           </Route>
@@ -97,7 +103,7 @@ export const MisRutas = () => {
             <Route path="pagos" element={<AdminPagos />} />
             <Route path="servicios" element={<AdminServicios />} />
             <Route path="reportes" element={<AdminReportes />} />
-            <Route path="calificaciones" element={<Calificaciones />} />
+            <Route path="calificaciones" element={<AdminCalificaciones />} />
 
             <Route path="configuracion" element={<AdminConfiguracion />} />
             <Route path="crear" element={<CrearHabitacion />} />

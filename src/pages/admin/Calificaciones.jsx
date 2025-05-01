@@ -4,7 +4,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../data/firebase";
 import { FaStar } from "react-icons/fa";
 
-const Calificaciones = () => {
+const AdminCalificaciones = () => {
   const [reseñas, setReseñas] = useState([]);
   const [selectedReview, setSelectedReview] = useState(null);
 
@@ -99,4 +99,4 @@ const Calificaciones = () => {
   );
 };
 
-export { Calificaciones };
+export default AdminCalificaciones ;
