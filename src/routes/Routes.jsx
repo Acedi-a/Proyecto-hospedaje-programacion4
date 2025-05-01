@@ -30,6 +30,7 @@ import { auth } from "../data/firebase";
 import { db } from "../data/firebase";
 import { doc, getDoc } from "firebase/firestore";	
 import { UserProvider } from "../context/UserContext"; // ✅ este es el bueno
+import ListarReservas from "../pages/admin/ListarReservas";
 
 
 export const MisRutas = () => {
@@ -95,7 +96,6 @@ export const MisRutas = () => {
             <Route index element={<AdminDashboard />} />
             <Route path="habitaciones" element={<Habitaciones />} />
             <Route path="habitaciones/nueva" element={<AdminNuevaHabitacion />} />
-            <Route path="reservas" element={<AdminReservas />} />
             <Route path="pagos" element={<AdminPagos />} />
             <Route path="servicios" element={<AdminServicios />} />
             <Route path="calificaciones" element={<AdminCalificaciones />} />
@@ -103,6 +103,8 @@ export const MisRutas = () => {
             <Route path="configuracion" element={<AdminConfiguracion />} />
             <Route path="crear" element={<CrearHabitacion />} />
             <Route path="editar/:id" element={<EditarHabitacion />} />
+            <Route path="listar-reservas" element={<ListarReservas />} />
+
           </Route>
         </Routes>
       </Router>

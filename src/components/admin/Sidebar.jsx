@@ -27,7 +27,7 @@
         icon: <BedDouble className="h-5 w-5" />,
       },
       {
-        href: "/admin/reservas",
+        href: "/admin/listar-reservas",
         label: "Reservas",
         icon: <Calendar className="h-5 w-5" />,
       },
