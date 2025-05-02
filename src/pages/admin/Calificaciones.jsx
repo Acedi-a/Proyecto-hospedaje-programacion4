@@ -39,16 +39,16 @@ const StarRating = ({ rating, size = 16, interactive = false, onChange }) => {
 const LoadingSpinner = () => (
   <div className="flex flex-col justify-center items-center py-16">
     <div className="relative">
-      <Loader2 className="h-12 w-12 text-indigo-600 animate-spin" />
-      <div className="absolute inset-0 rounded-full border-t-2 border-indigo-200 animate-pulse"></div>
+      <Loader2 className="h-12 w-12 text-green-600 animate-spin" />
+      <div className="absolute inset-0 rounded-full border-t-2 border-green-200 animate-pulse"></div>
     </div>
-    <p className="mt-4 text-indigo-700 text-lg font-medium">Cargando calificaciones...</p>
+    <p className="mt-4 text-black-700 text-lg font-medium">Cargando calificaciones...</p>
   </div>
 );
 
 // Estado vacío mejorado
 const EmptyState = () => (
-  <div className="text-center py-20 bg-gradient-to-b from-slate-50 to-slate-100 rounded-xl border border-dashed border-slate-300 mt-6 shadow-inner">
+  <div className="text-center py-20 bg-gradient-to-b from-slate-50 to-slate-100 rounded-xl border bozrder-dashed border-slate-300 mt-6 shadow-inner">
     <div className="bg-white p-4 rounded-full inline-flex items-center justify-center mb-6 shadow-md">
       <Inbox className="h-16 w-16 text-indigo-400" />
     </div>
@@ -108,9 +108,9 @@ const FilterMenu = ({ filters, setFilters }) => {
                   step="1"
                   value={tempFilters.minRating}
                   onChange={(e) => setTempFilters({ ...tempFilters, minRating: Number(e.target.value) })}
-                  className="w-full accent-indigo-600"
+                  className="w-full accent-green-600"
                 />
-                <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-md text-sm font-medium min-w-[28px] text-center">
+                <span className="bg-green-100 text-indigo-800 px-2 py-1 rounded-md text-sm font-medium min-w-[28px] text-center">
                   {tempFilters.minRating}
                 </span>
               </div>
@@ -134,7 +134,7 @@ const FilterMenu = ({ filters, setFilters }) => {
             <div className="flex justify-end pt-2">
               <button
                 onClick={handleApply}
-                className="bg-indigo-600 text-white px-4 py-1.5 rounded-md text-sm hover:bg-indigo-700 transition-colors"
+                className="bg-green-600 text-white px-4 py-1.5 rounded-md text-sm hover:bg-indigo-700 transition-colors"
               >
                 Aplicar Filtros
               </button>
@@ -362,14 +362,14 @@ export const AdminCalificaciones = () => {
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 mb-8 overflow-hidden">
           <div className="px-6 py-6 flex flex-col md:flex-row justify-between items-start md:items-center">
             <div className="flex items-center gap-3 mb-4 md:mb-0">
-              <div className="p-3 bg-indigo-100 rounded-lg">
-                <Star className="h-8 w-8 text-indigo-600" />
+              <div className="p-3 bg-green-100 rounded-lg">
+                <Star className="h-8 w-8 text-black-600" />
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-slate-800 flex items-center">
                   Gestión de Calificaciones
                   {reseñas.length > 0 && (
-                    <span className="ml-2 bg-indigo-100 text-indigo-800 text-sm py-0.5 px-2 rounded-full">
+                    <span className="ml-2 bg-green-100 text-indigo-800 text-sm py-0.5 px-2 rounded-full">
                       {reseñas.length}
                     </span>
                   )}
@@ -383,7 +383,7 @@ export const AdminCalificaciones = () => {
                 <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
                   <div className="text-sm text-slate-500 mb-1">Calificación Media</div>
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-indigo-600">{avgRating}</span>
+                    <span className="text-2xl font-bold text-black-600">{avgRating}</span>
                     <StarRating rating={parseFloat(avgRating)} size={18} />
                   </div>
                 </div>
@@ -428,14 +428,14 @@ export const AdminCalificaciones = () => {
             <div className="flex items-center gap-3">
               <div className="flex border rounded-lg overflow-hidden">
                 <button
-                  className={`px-3 py-2 flex items-center gap-1 ${activeView === 'cards' ? 'bg-indigo-50 text-indigo-700' : 'bg-white text-slate-600'}`}
+                  className={`px-3 py-2 flex items-center gap-1 ${activeView === 'cards' ? 'bg-emerald-50 text-black-700' : 'bg-white text-slate-600'}`}
                   onClick={() => setActiveView('cards')}
                 >
                   <Menu size={16} />
                   <span className="hidden sm:inline">Tarjetas</span>
                 </button>
                 <button
-                  className={`px-3 py-2 flex items-center gap-1 ${activeView === 'table' ? 'bg-indigo-50 text-indigo-700' : 'bg-white text-slate-600'}`}
+                  className={`px-3 py-2 flex items-center gap-1 ${activeView === 'table' ? 'bg-emerald-50 text-black-700' : 'bg-white text-slate-600'}`}
                   onClick={() => setActiveView('table')}
                 >
                   <Menu size={16} className="rotate-90" />

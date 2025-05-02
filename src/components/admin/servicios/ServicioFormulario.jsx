@@ -232,8 +232,8 @@ export const ServicioFormulario = ({
                         file:mr-4 file:py-2 file:px-4
                         file:rounded-md file:border-0
                         file:text-sm file:font-semibold
-                        file:bg-blue-50 file:text-blue-700
-                        hover:file:bg-blue-100"
+                        file:bg-green-100 file:text-white-7
+                        hover:file:bg-emerald-100"
             />
             <p className="mt-1 text-xs text-gray-500">
               {servicioEditando.id 

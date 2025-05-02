@@ -51,7 +51,7 @@ export const ServicioTabla = ({ servicios = [], editarServicio, eliminarServicio
 
                 {/* Categoría */}
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm">
+                  <span className="inline-block px-3 py-1 rounded-full bg-green-100 text-white-800 text-sm">
                     {servicio.categoria || 'Sin categoría'}
                   </span>
                 </td>
@@ -66,7 +66,7 @@ export const ServicioTabla = ({ servicios = [], editarServicio, eliminarServicio
                   <div className="flex items-center space-x-3">
                     <button
                       onClick={() => editarServicio(servicio)}
-                      className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                      className="px-4 py-2 bg-emerald-50 text-green-600 rounded-md hover:bg-green-100 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                       aria-label={`Editar ${servicio.nombre}`}
                     >
                       Editar

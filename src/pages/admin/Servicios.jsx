@@ -156,7 +156,7 @@ export const AdminServicios = () => {
 
       {cargando ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-50"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-green-500 border-opacity-50"></div>
         </div>
       ) : (
         <>
@@ -176,7 +176,7 @@ export const AdminServicios = () => {
           <div className="mb-4 text-right">
             <button
               onClick={crearNuevoServicio}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-green-700"
             >
               Crear Servicio
             </button>
