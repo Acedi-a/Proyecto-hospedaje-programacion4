@@ -74,7 +74,7 @@ export const ReservaConfirmacion = ({ formData, calcularTotal, datauser }) => {
             <div className="pl-7 space-y-2 text-sm text-gray-800">
               <ul className="list-disc list-inside">
                 {formData.serviciosAdicionales.map((servicio, index) => (
-                  <li className="flex gap-2 text-center items-center" key={index}>{servicio.nombre}:<span className="font-semibold text-lg text-emerald-600">{servicio.precio}</span></li>
+                  <li className="flex gap-2 text-center items-center" key={index}>{servicio.nombre}:<span className="font-semibold text-lg text-emerald-600"> Bs.{servicio.precio}</span></li>
                 ))}
               </ul>
             </div>
@@ -83,7 +83,7 @@ export const ReservaConfirmacion = ({ formData, calcularTotal, datauser }) => {
 
         {/* Total */}
         <div className="pt-4 border-t border-gray-200 text-right">
-          <h4 className="text-xl font-bold text-emerald-700">Total a pagar: ${calcularTotal()}</h4>
+          <h4 className="text-xl font-bold text-emerald-700">Total a pagar: Bs.{calcularTotal()}</h4>
           <p className="text-xs text-gray-500 mt-1">Este monto fue cubierto durante el proceso de pago.</p>
         </div>
       </div>

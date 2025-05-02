@@ -128,14 +128,6 @@ export const CardReserva = ({ reserva, historica = false, onReservaUpdated }) =>
               <Edit className="h-4 w-4 mr-2" />
               Modificar
             </button>
-
-            <Link
-              to={`/reservas/cancelar/${reserva.id}`}
-              className="inline-flex items-center justify-center px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-md text-sm font-medium transition-colors duration-200"
-            >
-              <X className="h-4 w-4 mr-2" />
-              Cancelar
-            </Link>
           </>
         )}
       </div>

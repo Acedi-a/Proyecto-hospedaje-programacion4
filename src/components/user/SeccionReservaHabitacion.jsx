@@ -51,7 +51,7 @@ export const ReservaHabitacion = ({ selectedRoom, onSelectRoom }) => {
 
               <div className="flex justify-between items-center mt-2">
                 <div></div>
-                <div className="text-lg font-semibold">${habitacion.precio}/noche</div>
+                <div className="text-lg font-semibold">Bs. {habitacion.precio}/noche</div>
               </div>
             </div>
           </div>

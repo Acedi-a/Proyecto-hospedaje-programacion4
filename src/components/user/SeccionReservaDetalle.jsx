@@ -10,7 +10,6 @@ export const ReservaDetalles = ({ formData, onFormChange, onDateChange, onServic
 
   // --- useEffect para cargar servicios (SIN CATEGORÍAS) ---
   useEffect(() => {
-    // Consulta solo servicios activos/true
     const q = query(
       collection(db, "Servicios"),
       where("estado", "in", [true, "activo"]) // Asegura filtrar en la consulta
@@ -38,8 +37,8 @@ export const ReservaDetalles = ({ formData, onFormChange, onDateChange, onServic
       }
     );
 
-    return () => unsubscribe(); // Limpiar listener al desmontar
-  }, []); // Solo se ejecuta una vez al montar
+    return () => unsubscribe(); 
+  }, []); 
 
   // --- Función para seleccionar/deseleccionar servicios (sin cambios) ---
   const handleServiceToggle = (servicio) => {
@@ -102,7 +101,7 @@ export const ReservaDetalles = ({ formData, onFormChange, onDateChange, onServic
     if (!formData.fechaInicio || !(formData.fechaInicio instanceof Date)) return getCurrentDateFormatted();
     const nextDay = new Date(formData.fechaInicio);
     nextDay.setDate(nextDay.getDate() + 1);
-    nextDay.setHours(0, 0, 0, 0); // Asegurar comparación a nivel de día
+    nextDay.setHours(0, 0, 0, 0); 
     return formatDateForInput(nextDay);
   };
 
@@ -129,11 +128,8 @@ export const ReservaDetalles = ({ formData, onFormChange, onDateChange, onServic
         <div className="bg-white rounded-xl shadow-lg p-6 mx-auto max-w-4xl">
           <h2 className="text-2xl font-bold text-emerald-700 mb-6">Detalles de la Reserva</h2>
 
-          {/* Sección de Fechas y Huéspedes (CAMPOS REQUERIDOS) */}
-          <div className="space-y-6 mb-8"> {/* Separado lógicamente */}
-            {/* Fechas */}
+          <div className="space-y-6 mb-8"> 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Fecha Llegada */}
               <div>
                 <label htmlFor="fechaInicio" className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
                   <Calendar size={18} className="mr-2 text-emerald-600" />
@@ -145,20 +141,18 @@ export const ReservaDetalles = ({ formData, onFormChange, onDateChange, onServic
                   name="fechaInicio"
                   value={formData.fechaInicio ? formatDateForInput(formData.fechaInicio) : ""}
                   onChange={(e) => {
-                    // Intentar parsear la fecha localmente para evitar problemas de zona horaria al crear el objeto Date
                     const dateValue = e.target.value;
                     const dateObj = dateValue ? new Date(dateValue + 'T00:00:00') : null;
                     onDateChange(dateObj, "start");
                   }}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                   min={getCurrentDateFormatted()}
-                  required // HTML required attribute
+                  required 
                 />
                 {formData.fechaInicio && (
                   <p className="mt-1 text-xs text-emerald-700">{formatFecha(formData.fechaInicio)}</p>
                 )}
               </div>
-              {/* Fecha Salida */}
               <div>
                 <label htmlFor="fechaFin" className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
                   <CalendarDays size={18} className="mr-2 text-emerald-600" />
@@ -176,7 +170,7 @@ export const ReservaDetalles = ({ formData, onFormChange, onDateChange, onServic
                   }}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-gray-100"
                   min={getMinEndDate()}
-                  required // HTML required attribute
+                  required 
                   disabled={!formData.fechaInicio}
                 />
                 {formData.fechaFin && (
@@ -184,7 +178,6 @@ export const ReservaDetalles = ({ formData, onFormChange, onDateChange, onServic
                 )}
               </div>
             </div>
-            {/* Mensajes de validación de fechas */}
             {formData.fechaInicio && formData.fechaFin && formData.fechaFin <= formData.fechaInicio && (
               <div className="bg-red-50 p-3 rounded-lg border border-red-100 mt-2">
                 <p className="text-red-700 font-medium text-center text-sm">
@@ -192,7 +185,6 @@ export const ReservaDetalles = ({ formData, onFormChange, onDateChange, onServic
                 </p>
               </div>
             )}
-            {/* Duración calculada */}
             {formData.fechaInicio && formData.fechaFin && formData.fechaFin > formData.fechaInicio && (
               <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-100 mt-2">
                 <p className="text-emerald-700 font-medium text-center text-sm">
@@ -202,7 +194,7 @@ export const ReservaDetalles = ({ formData, onFormChange, onDateChange, onServic
             )}
 
             {/* Huéspedes */}
-            <div className="relative"> {/* Añadido relative para el icono del select */}
+            <div className="relative"> 
               <label htmlFor="huespedes" className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
                 <Users size={18} className="mr-2 text-emerald-600" />
                 Número de huéspedes *
@@ -211,9 +203,9 @@ export const ReservaDetalles = ({ formData, onFormChange, onDateChange, onServic
                 id="huespedes"
                 name="huespedes"
                 value={formData.huespedes || ""}
-                onChange={onFormChange} // Llama a la función del padre
+                onChange={onFormChange} 
                 className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 appearance-none bg-white"
-                required // HTML required attribute
+                required 
               >
                 <option value="" disabled>Selecciona...</option>
                 {[1, 2, 3, 4, 5, 6].map((n) =>
@@ -231,13 +223,11 @@ export const ReservaDetalles = ({ formData, onFormChange, onDateChange, onServic
 
           {/* --- Sección de Opcionales --- */}
           <div className="space-y-6 pt-6 border-t border-gray-200">
-            {/* Servicios Adicionales (OPCIONAL) */}
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 Servicios Adicionales <span className="text-sm font-normal text-gray-500">(Opcional)</span>
               </h3>
 
-              {/* Grid de Servicios (SIN CATEGORÍAS) */}
               {servicios.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {servicios.map((servicio) => (
@@ -246,25 +236,23 @@ export const ReservaDetalles = ({ formData, onFormChange, onDateChange, onServic
                       onClick={() => handleServiceToggle(servicio)}
                       onKeyPress={(e) => e.key === 'Enter' && handleServiceToggle(servicio)}
                       role="checkbox"
-                      aria-checked={formData.serviciosAdicionales?.some((s) => s.id === servicio.id)} // Optional chaining
+                      aria-checked={formData.serviciosAdicionales?.some((s) => s.id === servicio.id)} 
                       tabIndex={0}
                       className={`flex items-start p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ease-in-out group ${formData.serviciosAdicionales?.some((s) => s.id === servicio.id) // Optional chaining
                         ? "border-emerald-500 bg-emerald-50 shadow-sm"
                         : "border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/50"
                         }`}
                     >
-                      {/* Checkbox visual */}
                       <div className="mr-3 mt-1 flex-shrink-0">
                         <div className={`w-5 h-5 rounded-md flex items-center justify-center transition-all duration-200 ease-in-out transform group-hover:scale-105 ${formData.serviciosAdicionales?.some((s) => s.id === servicio.id) // Optional chaining
                           ? "bg-emerald-500 border border-emerald-600"
                           : "border-2 border-gray-300 group-hover:border-emerald-400"
                           }`}>
-                          {formData.serviciosAdicionales?.some((s) => s.id === servicio.id) && ( // Optional chaining
+                          {formData.serviciosAdicionales?.some((s) => s.id === servicio.id) && ( 
                             <Check size={14} className="text-white stroke-[3]" />
                           )}
                         </div>
                       </div>
-                      {/* Contenido del Servicio */}
                       <div className="flex-1 flex items-start">
                         {servicio.imagenUrl && (
                           <div className="mr-3 flex-shrink-0">
@@ -275,7 +263,7 @@ export const ReservaDetalles = ({ formData, onFormChange, onDateChange, onServic
                           <div className="flex justify-between items-baseline">
                             <h4 className="font-semibold text-gray-800 leading-tight">{servicio.nombre}</h4>
                             <span className="text-emerald-600 font-bold ml-2 whitespace-nowrap">
-                              ${servicio.precio.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              Bs. {servicio.precio.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                           </div>
                           {servicio.descripcion && (
@@ -293,7 +281,6 @@ export const ReservaDetalles = ({ formData, onFormChange, onDateChange, onServic
               )}
             </div>
 
-            {/* Comentarios (OPCIONAL) */}
             <div>
               <label htmlFor="comentarios" className="block text-sm font-medium text-gray-700 mb-2">
                 Solicitudes especiales <span className="text-sm font-normal text-gray-500">(Opcional)</span>
@@ -303,10 +290,9 @@ export const ReservaDetalles = ({ formData, onFormChange, onDateChange, onServic
                 name="comentarios"
                 rows="3"
                 value={formData.comentarios || ""}
-                onChange={onFormChange} // Llama a la función del padre
+                onChange={onFormChange} 
                 placeholder="Ej: Preferencia de piso alto, llegada tarde, alergias..."
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all resize-none"
-              // NO lleva 'required'
               ></textarea>
             </div>
           </div>
@@ -323,8 +309,8 @@ export const ReservaDetalles = ({ formData, onFormChange, onDateChange, onServic
             </div>
           </div>
 
-        </div> {/* Fin tarjeta blanca */}
-      </div> {/* Fin contenedor con padding */}
-    </div> // Fin contenedor principal
+        </div> 
+      </div> 
+    </div> 
   );
 };
