@@ -122,20 +122,20 @@ export function Habitaciones() {
     const getEstadoIcon = (estado) => {
         switch (estado?.toLowerCase()) {
             case 'disponible':
-                return <CheckCircle className="h-5 w-5 text-teal-500" />;
+                return <CheckCircle className="h-5 w-5 text-emerald-500" />;
             case 'ocupada':
                 return <XCircle className="h-5 w-5 text-rose-500" />;
             case 'mantenimiento':
                 return <AlertCircle className="h-5 w-5 text-amber-500" />;
             default:
-                return <CheckCircle className="h-5 w-5 text-teal-500" />;
+                return <CheckCircle className="h-5 w-5 text-emerald-500" />;
         }
     };
 
     const getEstadoBadge = (estado) => {
         switch (estado?.toLowerCase()) {
             case 'disponible':
-                return "bg-teal-100 text-teal-800 border border-teal-200";
+                return "bg-emerald-100 text-emerald-800 border border-emerald-200";
             case 'ocupada':
                 return "bg-rose-100 text-rose-800 border border-rose-200";
             case 'mantenimiento':
@@ -149,10 +149,10 @@ export function Habitaciones() {
         switch (estado?.toLowerCase()) {
             case 'disponible':
                 return {
-                    borderColor: '#0d9488', // teal-600
-                    gradientFrom: 'from-teal-50',
-                    gradientTo: 'to-cyan-50',
-                    shadowColor: 'shadow-teal-100'
+                    borderColor: '#059669', // emerald-600
+                    gradientFrom: 'from-emerald-50',
+                    gradientTo: 'to-green-50',
+                    shadowColor: 'shadow-emerald-100'
                 };
             case 'ocupada':
                 return {
@@ -170,18 +170,18 @@ export function Habitaciones() {
                 };
             default:
                 return {
-                    borderColor: '#0d9488', // teal-600
-                    gradientFrom: 'from-teal-50',
-                    gradientTo: 'to-cyan-50',
-                    shadowColor: 'shadow-teal-100'
+                    borderColor: '#059669', // emerald-600
+                    gradientFrom: 'from-emerald-50',
+                    gradientTo: 'to-green-50',
+                    shadowColor: 'shadow-emerald-100'
                 };
         }
     };
 
     if (loading) return (
         <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-700"></div>
-            <span className="ml-3 text-lg font-medium text-cyan-700">Cargando habitaciones...</span>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-700"></div>
+            <span className="ml-3 text-lg font-medium text-emerald-700">Cargando habitaciones...</span>
         </div>
     );
 
@@ -193,19 +193,19 @@ export function Habitaciones() {
     );
 
     return (
-        <div className="container mx-auto px-4 py-8 bg-gradient-to-br from-cyan-50 to-teal-50 min-h-screen">
+        <div className="container mx-auto px-4 py-8 bg-gradient-to-br from-emerald-50 to-green-50 min-h-screen">
             <ToastContainer theme="colored" />
             
             {/* Header con título y botones */}
             <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between">
-                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-700 to-teal-800 mb-4 md:mb-0">
+                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-700 to-green-800 mb-4 md:mb-0">
                     Gestión de Habitaciones
                 </h1>
                 
                 <div className="flex flex-wrap gap-3">
                     <button 
                         onClick={fetchHabitaciones}
-                        className="flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-700 text-white shadow-lg shadow-cyan-200 hover:bg-cyan-800 transition-all transform hover:scale-105"
+                        className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-700 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-800 transition-all transform hover:scale-105"
                     >
                         <RefreshCw className="h-5 w-5" />
                         Actualizar
@@ -213,7 +213,7 @@ export function Habitaciones() {
                     
                     <Link 
                         to="/admin/crear"
-                        className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-teal-600 to-cyan-700 text-white shadow-lg shadow-cyan-200 hover:from-teal-700 hover:to-cyan-800 transition-all transform hover:scale-105"
+                        className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-600 to-green-700 text-white shadow-lg shadow-emerald-200 hover:from-emerald-700 hover:to-green-800 transition-all transform hover:scale-105"
                     >
                         <Plus className="h-5 w-5" />
                         Crear Habitación
@@ -229,7 +229,7 @@ export function Habitaciones() {
                             onClick={() => setFiltros({...filtros, estado: 'todos'})}
                             className={`px-5 py-2 rounded-full transition-all ${
                                 filtros.estado === 'todos' 
-                                ? 'bg-gradient-to-r from-teal-600 to-cyan-700 text-white shadow-md' 
+                                ? 'bg-gradient-to-r from-emerald-600 to-green-700 text-white shadow-md' 
                                 : 'text-gray-600 hover:bg-gray-100'
                             }`}
                         >
@@ -239,8 +239,8 @@ export function Habitaciones() {
                             onClick={() => setFiltros({...filtros, estado: 'disponible'})}
                             className={`px-5 py-2 rounded-full flex items-center gap-1 transition-all ${
                                 filtros.estado === 'disponible' 
-                                ? 'bg-teal-500 text-white shadow-md' 
-                                : 'text-teal-600 hover:bg-teal-50'
+                                ? 'bg-emerald-500 text-white shadow-md' 
+                                : 'text-emerald-600 hover:bg-emerald-50'
                             }`}
                         >
                             <CheckCircle className="h-4 w-4" />
@@ -273,7 +273,7 @@ export function Habitaciones() {
             </div>
             
             {/* Panel de filtros adicionales */}
-            <div className="bg-white rounded-xl shadow-xl p-6 mb-8 border border-cyan-100 transition-all">
+            <div className="bg-white rounded-xl shadow-xl p-6 mb-8 border border-emerald-100 transition-all">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Capacidad mínima</label>
@@ -284,7 +284,7 @@ export function Habitaciones() {
                                 value={filtros.capacidad}
                                 onChange={(e) => setFiltros({...filtros, capacidad: e.target.value})}
                                 placeholder="Personas"
-                                className="w-full rounded-lg border border-gray-300 pl-10 pr-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                                className="w-full rounded-lg border border-gray-300 pl-10 pr-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                             />
                             <Users className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                         </div>
@@ -299,7 +299,7 @@ export function Habitaciones() {
                                 value={filtros.precioMin}
                                 onChange={(e) => setFiltros({...filtros, precioMin: e.target.value})}
                                 placeholder="Desde $"
-                                className="w-full rounded-lg border border-gray-300 pl-10 pr-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                                className="w-full rounded-lg border border-gray-300 pl-10 pr-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                             />
                             <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                         </div>
@@ -314,7 +314,7 @@ export function Habitaciones() {
                                 value={filtros.precioMax}
                                 onChange={(e) => setFiltros({...filtros, precioMax: e.target.value})}
                                 placeholder="Hasta $"
-                                className="w-full rounded-lg border border-gray-300 pl-10 pr-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                                className="w-full rounded-lg border border-gray-300 pl-10 pr-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                             />
                             <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                         </div>
@@ -328,7 +328,7 @@ export function Habitaciones() {
                                 value={filtros.busqueda}
                                 onChange={(e) => setFiltros({...filtros, busqueda: e.target.value})}
                                 placeholder="Nombre, descripción..."
-                                className="w-full rounded-lg border border-gray-300 pl-10 pr-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                                className="w-full rounded-lg border border-gray-300 pl-10 pr-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                             />
                             <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                         </div>
@@ -350,22 +350,22 @@ export function Habitaciones() {
             {(filtros.estado !== 'todos' || filtros.capacidad || filtros.precioMin || filtros.precioMax || filtros.busqueda) && (
                 <div className="mb-4 flex justify-between items-center">
                     <p className="text-gray-700 font-medium">
-                        <span className="text-cyan-700 font-bold">{filteredHabitaciones.length}</span> habitaciones encontradas
+                        <span className="text-emerald-700 font-bold">{filteredHabitaciones.length}</span> habitaciones encontradas
                     </p>
                     <div className="text-sm text-gray-500 flex flex-wrap gap-2">
                         {filtros.capacidad && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
                                 Min. {filtros.capacidad} personas
                             </span>
                         )}
                         {(filtros.precioMin || filtros.precioMax) && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-cyan-100 text-cyan-800">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-green-100 text-green-800">
                                 Precio: {filtros.precioMin ? `$${filtros.precioMin}` : '$0'} 
                                 {filtros.precioMax ? ` - $${filtros.precioMax}` : ' +'}
                             </span>
                         )}
                         {filtros.busqueda && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
                                 Búsqueda: {filtros.busqueda}
                             </span>
                         )}
@@ -412,7 +412,7 @@ export function Habitaciones() {
                                 <div className="p-5">
                                     <div className="flex justify-between items-start mb-3">
                                         <h2 className="text-xl font-bold text-gray-800">{habitacion.nombre}</h2>
-                                        <span className="flex items-center gap-1 bg-gradient-to-r from-teal-600 to-cyan-700 text-white text-sm font-medium px-3 py-1 rounded-full shadow-sm">
+                                        <span className="flex items-center gap-1 bg-gradient-to-r from-emerald-600 to-green-700 text-white text-sm font-medium px-3 py-1 rounded-full shadow-sm">
                                             <DollarSign className="h-4 w-4" />
                                             {habitacion.precio}/noche
                                         </span>
@@ -422,14 +422,14 @@ export function Habitaciones() {
                                     
                                     <div className="grid grid-cols-2 gap-3 mb-4">
                                         <div className="flex items-center">
-                                            <Users className="h-5 w-5 text-cyan-600 mr-2" />
+                                            <Users className="h-5 w-5 text-emerald-600 mr-2" />
                                             <div>
                                                 <p className="text-xs text-gray-500">Capacidad</p>
                                                 <p className="font-medium">{habitacion.capacidad} personas</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center">
-                                            <Bed className="h-5 w-5 text-cyan-600 mr-2" />
+                                            <Bed className="h-5 w-5 text-emerald-600 mr-2" />
                                             <div>
                                                 <p className="text-xs text-gray-500">Camas</p>
                                                 <p className="font-medium">{habitacion.camas} camas</p>
@@ -440,14 +440,14 @@ export function Habitaciones() {
                                     {/* Servicios */}
                                     <div className="mb-4">
                                         <h3 className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                                            <Coffee className="h-4 w-4 text-teal-600 mr-1" />
+                                            <Coffee className="h-4 w-4 text-emerald-600 mr-1" />
                                             Servicios incluidos:
                                         </h3>
                                         <div className="flex flex-wrap gap-2">
                                             {habitacion.servicios?.map((servicio, index) => (
                                                 <span 
                                                     key={index} 
-                                                    className="bg-cyan-50 text-cyan-700 text-xs px-2.5 py-1 rounded-full border border-cyan-100"
+                                                    className="bg-emerald-50 text-emerald-700 text-xs px-2.5 py-1 rounded-full border border-emerald-100"
                                                 >
                                                     {servicio}
                                                 </span>
@@ -459,7 +459,7 @@ export function Habitaciones() {
                                     <div className="pt-3 border-t border-gray-200 flex justify-end">
                                         <Link
                                             to={`/admin/editar/${habitacion.id}`}
-                                            className="flex items-center gap-1 px-4 py-1.5 bg-gradient-to-r from-teal-600 to-cyan-700 text-white text-sm rounded-full hover:from-teal-700 hover:to-cyan-800 transition shadow-md hover:shadow-lg transform hover:scale-105"
+                                            className="flex items-center gap-1 px-4 py-1.5 bg-gradient-to-r from-emerald-600 to-green-700 text-white text-sm rounded-full hover:from-emerald-700 hover:to-green-800 transition shadow-md hover:shadow-lg transform hover:scale-105"
                                         >
                                             <Edit className="h-4 w-4" />
                                             Editar habitación
@@ -493,7 +493,7 @@ export function Habitaciones() {
                         ) : (
                             <Link 
                                 to="/admin/crear"
-                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-600 to-cyan-700 text-white rounded-full hover:from-teal-700 hover:to-cyan-800 transition shadow-md"
+                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-green-700 text-white rounded-full hover:from-emerald-700 hover:to-green-800 transition shadow-md"
                             >
                                 <Plus className="h-5 w-5" />
                                 Crear primera habitación
