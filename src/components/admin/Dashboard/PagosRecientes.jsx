@@ -12,19 +12,19 @@ export const RecentPayments = () => {
     const fetchPayments = async () => {
       try {
         const pagosRef = collection(db, "Pagos");
-        const q = query(pagosRef, orderBy("fechaPago", "desc"), limit(3));
+        const q = query(pagosRef, orderBy("fechaPago", "desc"), limit(3)); // Ordenar por fecha de pago descendente y limitar a 3
         const querySnapshot = await getDocs(q);
-        
+
         const pagosData = [];
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          
+
           // Formatea la fecha para visualización
           const fechaPago = data.fechaPago?.toDate();
           const fechaStr = fechaPago
             ? `${fechaPago.getDate()} ${fechaPago.toLocaleDateString('es-ES', { month: 'short' })} ${fechaPago.getFullYear()}`
             : "Fecha no disponible";
-            
+
           pagosData.push({
             id: doc.id,
             cliente: data.resumenReserva?.cliente || "Cliente sin nombre",
@@ -34,7 +34,7 @@ export const RecentPayments = () => {
             metodo: data.metodoPago || "No especificado"
           });
         });
-        
+
         setPayments(pagosData);
       } catch (error) {
         console.error("Error al obtener pagos:", error);

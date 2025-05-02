@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../../data/firebase";
 
 export const RecentReviews = () => {
@@ -12,28 +12,24 @@ export const RecentReviews = () => {
     const fetchReviews = async () => {
       try {
         const reseñasRef = collection(db, "reseñas");
-        const q = query(reseñasRef, orderBy("fecha", "desc"), limit(3));
-        const querySnapshot = await getDocs(q);
+        const querySnapshot = await getDocs(reseñasRef);
 
-        if (querySnapshot.empty) {
-          setReviews([]);
-        } else {
-          const reviewsData = [];
-          querySnapshot.forEach((doc) => {
-            const data = doc.data();
+        // Filtramos y ordenamos los datos localmente
+        const allReviews = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data()
+        }));
 
-            reviewsData.push({
-              id: doc.id,
-              cliente: data.cliente || "Cliente desconocido",
-              habitacion: data.habitacion || "Habitación no especificada",
-              fecha: data.fecha || "Fecha no disponible",
-              puntuacion: data.puntuacion || 5,
-              comentario: data.comentario || "Sin comentarios"
-            });
-          });
+        // Convertimos la fecha de Firebase a un formato legible
+        const recentReviews = allReviews
+          .sort((a, b) => (a.fecha.seconds > b.fecha.seconds ? -1 : 1)) // Ordena por fecha (descendente)
+          .slice(0, 3)
+          .map((reseña) => ({
+            ...reseña,
+            fecha: reseña.fecha ? new Date(reseña.fecha.seconds * 1000).toLocaleDateString() : "Fecha no disponible"
+          }));
 
-          setReviews(reviewsData);
-        }
+        setReviews(recentReviews);
       } catch (error) {
         console.error("Error al obtener reseñas:", error);
         setReviews([]);
