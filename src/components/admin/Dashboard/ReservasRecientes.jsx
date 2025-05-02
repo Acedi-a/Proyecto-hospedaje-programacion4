@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Users } from "lucide-react";
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, limit, doc, getDoc } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, limit, doc, getDoc } from "firebase/firestore";
 import { db } from "../../../data/firebase";
 
 export const RecentReservations = () => {
@@ -12,32 +12,32 @@ export const RecentReservations = () => {
     const fetchReservations = async () => {
       try {
         const reservasRef = collection(db, "Reservas");
-        const q = query(reservasRef, limit(4));
+        const q = query(reservasRef, orderBy("fechaInicio", "desc"), limit(4)); // Ordena por fechaInicio descendente
         const querySnapshot = await getDocs(q);
 
         const reservasData = [];
-        
+
         for (const docSnapshot of querySnapshot.docs) {
           const data = docSnapshot.data();
-          
-          // Obtener los datos de la habitación
+
+          // Obtener los datos de la habitación usando habitacionId
           let habitacionNombre = "Habitación sin especificar";
-          if (data.habitacion) {
-            const habitacionDoc = await getDoc(doc(db, "Habitaciones", data.habitacion));
+          if (data.habitacionId) {
+            const habitacionDoc = await getDoc(doc(db, "Habitaciones", data.habitacionId));
             if (habitacionDoc.exists()) {
-              habitacionNombre = habitacionDoc.data().nombre;
+              habitacionNombre = habitacionDoc.data().nombre || habitacionNombre;
             }
           }
 
-          // Obtener el nombre y apellido del usuario usando idusuario (colección 'usuarios' en minúsculas)
+          // Obtener el nombre y apellido del usuario usando idusuario
           let clienteNombre = "Cliente sin nombre";
           if (data.idusuario) {
-            const usuarioDoc = await getDoc(doc(db, "usuarios", data.idusuario)); // Corregido aquí: colección 'usuarios' en minúsculas
+            const usuarioDoc = await getDoc(doc(db, "usuarios", data.idusuario));
             if (usuarioDoc.exists()) {
               const usuarioData = usuarioDoc.data();
               const nombre = usuarioData.nombre || "Nombre no disponible";
               const apellido = usuarioData.apellido || "Apellido no disponible";
-              clienteNombre = `${nombre} ${apellido}`.toUpperCase(); // Concatenamos y convertimos todo a mayúsculas
+              clienteNombre = `${nombre} ${apellido}`.toUpperCase();
             }
           }
 
@@ -48,16 +48,15 @@ export const RecentReservations = () => {
               ? `${fechaInicio.getDate()} ${fechaInicio.toLocaleDateString("es-ES", { month: "short" })} - ${fechaFin.getDate()} ${fechaFin.toLocaleDateString("es-ES", { month: "short" })} ${fechaFin.getFullYear()}`
               : "Fechas no disponibles";
 
-          // Calcular el monto total incluyendo servicios adicionales
+          // Calcular el monto total
           let montoTotal = 0;
-          
-          // Sumar el precio de la habitación si está disponible
-          if (data.habitacion) {
-            const habitacionDoc = await getDoc(doc(db, "Habitaciones", data.habitacion));
+          if (data.habitacionId) {
+            const habitacionDoc = await getDoc(doc(db, "Habitaciones", data.habitacionId));
             if (habitacionDoc.exists()) {
               const precioHabitacion = habitacionDoc.data().precio || 0;
-              const diasEstadia = fechaFin && fechaInicio ? 
-                Math.ceil((fechaFin - fechaInicio) / (1000 * 60 * 60 * 24)) : 0;
+              const diasEstadia = fechaFin && fechaInicio
+                ? Math.ceil((fechaFin - fechaInicio) / (1000 * 60 * 60 * 24))
+                : 0;
               montoTotal += precioHabitacion * diasEstadia;
             }
           }
@@ -69,7 +68,7 @@ export const RecentReservations = () => {
 
           reservasData.push({
             id: docSnapshot.id,
-            cliente: clienteNombre, // Aquí se muestra el nombre y apellido del cliente en mayúsculas
+            cliente: clienteNombre,
             habitacion: habitacionNombre,
             fechas: fechasStr,
             estado: data.estado || "pendiente",
@@ -110,7 +109,7 @@ export const RecentReservations = () => {
                     <Users className="h-5 w-5 text-gray-500" />
                   </div>
                   <div>
-                    <div className="font-medium">{reserva.cliente}</div> {/* Se muestra el nombre completo del cliente en mayúsculas */}
+                    <div className="font-medium">{reserva.cliente}</div>
                     <div className="text-sm text-gray-500">
                       {reserva.habitacion} • {reserva.fechas}
                     </div>
@@ -144,7 +143,7 @@ export const RecentReservations = () => {
           )}
         </div>
         <div className="mt-4 text-center">
-          <Link to="/admin/reservas">
+          <Link to="/admin/listar-reservas">
             <button className="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
               Ver todas las reservas
             </button>
