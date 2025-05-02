@@ -31,6 +31,8 @@ import { UserProvider } from "../context/UserContext"; // ✅ este es el bueno
 import ListarReservas from "../pages/admin/ListarReservas";
 import {Calificaciones} from "../pages/user/Calificaciones";
 import {AdminCalificaciones} from "../pages/admin/Calificaciones";
+import { Celia } from "../pages/user/Celia";
+import { ContextCache } from "../components/user/ContextCache";
 
 
 
@@ -79,6 +81,7 @@ export const MisRutas = () => {
   return  (
     <UserProvider>
       <Router>
+        <ContextCache/>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
@@ -88,10 +91,8 @@ export const MisRutas = () => {
             <Route path="reservas" element={<Reservas />} />
             <Route path="reservas/nueva" element={<NuevaReserva />} />
             <Route path="reservas/editar/:id" element={<EditarReserva />} />
-
-
             <Route path="calificaciones" element={<Calificaciones />} />
-
+            <Route path="celia" element={<Celia/>} />
             <Route path="calificaciones/nueva" element={<NuevaCalificacion />} />
             <Route path="servicios" element={<Servicios />} />
           </Route>

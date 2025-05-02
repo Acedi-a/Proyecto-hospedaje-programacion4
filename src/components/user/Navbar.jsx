@@ -16,6 +16,7 @@ export const Navbar = ({ uid }) => {
     { href: '/reservas', label: 'Mis Reservas' },
     { href: '/reservas/nueva', label: 'Nueva Reserva' },
     { href: '/calificaciones', label: 'Calificaciones' },
+    { href: '/celia', label: 'Celia' },
   ];
 
   const isActive = (path) => {
