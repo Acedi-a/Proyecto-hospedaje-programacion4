@@ -1,11 +1,13 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react"; // Eliminamos useRef
 import { db } from "../../data/firebase";
 import { collection, getDocs, query, where, Timestamp, orderBy } from "firebase/firestore";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
-// Importar librerías para PDF
-import html2canvas from 'html2canvas';
+// Importar jsPDF
 import jsPDF from 'jspdf';
+// Importar jspdf-autotable (asegúrate de que está instalado)
+import 'jspdf-autotable';
+
 
 export const AdminReportes = () => {
   // Estados para datos
@@ -24,11 +26,10 @@ export const AdminReportes = () => {
   // Estados para gráficos
   const [datosPorDia, setDatosPorDia] = useState([]);
 
-  // Colores para gráficos
+  // Colores para gráficos (mantener por si se usan en la UI)
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
-  // Referencia para el contenido del reporte que se va a descargar
-  const reportRef = useRef(); // Crear una referencia
+  // Ya no necesitamos reportRef
 
   // Establecer período inicial
   useEffect(() => {
@@ -90,7 +91,10 @@ export const AdminReportes = () => {
       const pagosData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
-        total: parseFloat(doc.data().total) || 0
+        // Asegurarse de que total es un número
+        total: parseFloat(doc.data().total) || 0,
+        // Convertir la fecha de Timestamp a objeto Date para fácil manejo
+        fechaPago: doc.data().fechaPago?.toDate()
       }));
 
       setPagos(pagosData);
@@ -99,6 +103,7 @@ export const AdminReportes = () => {
 
     } catch (error) {
       console.error("Error al cargar pagos:", error);
+      alert("Error al cargar los datos de pagos.");
     } finally {
       setLoading(false);
     }
@@ -128,9 +133,10 @@ export const AdminReportes = () => {
 
     // Calcular por día para gráfico
     const porDia = pagosData.reduce((acc, pago) => {
+      // Usar el objeto Date que ya convertimos
       if (!pago.fechaPago) return acc;
 
-      const fecha = pago.fechaPago.toDate().toISOString().split('T')[0];
+      const fecha = pago.fechaPago.toISOString().split('T')[0];
       if (!acc[fecha]) {
         acc[fecha] = { fecha, total: 0, cantidad: 0 };
       }
@@ -162,72 +168,88 @@ export const AdminReportes = () => {
     }
   };
 
-  // **Función para generar PDF**
-  const generatePdf = async () => {
-      const input = reportRef.current; // Usar la referencia al contenedor del reporte
+  // **Función para generar PDF directamente con datos y estructura**
+  const generatePdf = () => {
+      const pdf = new jsPDF('p', 'mm', 'a4'); // 'p' para vertical, 'mm' para unidades, 'a4' para tamaño
+      let yPos = 15; // Posición vertical inicial
 
-      if (!input) {
-          console.error("No se encontró el elemento del reporte para generar el PDF.");
-          return;
+      // Título del reporte
+      pdf.setFontSize(18);
+      pdf.text("Reporte de Pagos", 14, yPos);
+      yPos += 10;
+
+      // Rango de fechas del reporte
+      pdf.setFontSize(12);
+      pdf.text(`Periodo: ${fechaInicio} al ${fechaFin}`, 14, yPos);
+      yPos += 15;
+
+      // Resumen estadístico
+      pdf.setFontSize(14);
+      pdf.text("Resumen:", 14, yPos);
+      yPos += 7;
+
+      pdf.setFontSize(12);
+      pdf.text(`Total Recaudado: ${formatoMoneda(totalPagos)}`, 14, yPos);
+      yPos += 7;
+
+      pdf.text(`Cantidad de Pagos: ${pagos.length}`, 14, yPos);
+      yPos += 7;
+
+      if (resumenMetodosPago.length > 0) {
+          pdf.text(`Método de Pago Principal: ${resumenMetodosPago[0].metodo} (${formatoMoneda(resumenMetodosPago[0].total)})`, 14, yPos);
+          yPos += 7;
       }
 
-      // Opciones para html2canvas
-      const options = {
-          scale: 2, // Aumenta la escala para mejor resolución
-          useCORS: true, // Habilita CORS si tienes imágenes externas (necesario para gráficos SVG)
-          logging: false, // Desactiva los logs de html2canvas
-          // Captura el área completa, incluso si hay scroll
-          windowWidth: input.scrollWidth,
-          windowHeight: input.scrollHeight,
-      };
+       pdf.text(`Promedio por Pago: ${pagos.length > 0 ? formatoMoneda(totalPagos / pagos.length) : formatoMoneda(0)}`, 14, yPos);
+       yPos += 15; // Espacio antes de la tabla
 
-      try {
-          const canvas = await html2canvas(input, options);
-          const imgData = canvas.toDataURL('image/png');
+       // Tabla detallada de pagos
+       pdf.setFontSize(14);
+       pdf.text("Detalle de Pagos:", 14, yPos);
+       yPos += 7;
 
-          const pdf = new jsPDF('p', 'mm', 'a4');
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = pdf.internal.pageSize.getHeight();
-          const imgHeight = canvas.height * pdfWidth / canvas.width; // Calcula la altura de la imagen en el PDF
+       // Preparar datos para autoTable
+       const tableColumn = ["Fecha", "Método", "Total"];
+       const tableRows = pagos.map(pago => [
+           pago.fechaPago ? pago.fechaPago.toLocaleDateString('es-ES') : 'N/A', // Formatear fecha
+           pago.metodoPago || 'Desconocido',
+           formatoMoneda(pago.total), // Formatear moneda
+       ]);
 
-          let position = 0; // Posición vertical actual en el PDF
+       // Añadir la tabla usando autoTable
+       pdf.autoTable(tableColumn, tableRows, {
+           startY: yPos, // Iniciar la tabla después del último texto
+           headStyles: { fillColor: [200, 200, 200] }, // Estilo de la cabecera (gris claro)
+           margin: { left: 14, right: 14 }, // Márgenes
+           didDrawPage: function (data) {
+               // Opcional: Añadir número de página en el pie de página
+               pdf.setFontSize(10);
+               const pageNumber = pdf.internal.getNumberOfPages();
+               const pageWidth = pdf.internal.pageSize.getWidth();
+               pdf.text(`Página ${pageNumber}`, pageWidth / 2, pdf.internal.pageSize.getHeight() - 10, { align: 'center' });
+           }
+       });
 
-          // Añadir la primera página
-          pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+       // Si hubiera gráficos, aquí podrías añadir una sección con sus datos o omitirlos.
+       // Por ejemplo, podrías listar los métodos de pago con sus totales si no usas el gráfico circular.
 
-          // Calcular la altura restante de la imagen
-          let heightLeft = imgHeight - pdfHeight;
-
-          // Añadir páginas adicionales si es necesario
-          while (heightLeft >= 0) {
-              position = heightLeft - imgHeight; // Mueve hacia arriba para la siguiente sección
-              pdf.addPage(); // Añade una nueva página
-              pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight); // Añade la imagen
-              heightLeft -= pdfHeight; // Reduce la altura restante
-          }
-
-          pdf.save('reporte_pagos.pdf'); // Nombre del archivo a descargar
-
-      } catch (err) {
-          console.error("Error al generar el PDF:", err);
-          alert("Hubo un error al generar el PDF. Por favor, intenta de nuevo.");
-      }
+       // Guardar el PDF
+       pdf.save('reporte_pagos.pdf');
   };
 
+
   return (
-    // Asignar la referencia al div principal y hacerlo relativo para posicionar el botón
-    <div className="p-6 bg-gray-50 relative" ref={reportRef}>
+    // El div principal ya no necesita ref, pero mantener 'relative' podría ser útil para el botón
+    <div className="p-6 bg-gray-50 relative">
 
         {/* Botón de Descarga de PDF - Posicionado absolutamente en la esquina superior derecha */}
-        <div className="absolute top-4 right-4 z-10"> {/* z-10 asegura que esté por encima de otros elementos si se superponen */}
+        <div className="absolute top-4 right-4 z-10"> {/* z-10 asegura que esté por encima */}
             <button
                 onClick={generatePdf}
-                // Añadir margen a la derecha si hay otros elementos en la misma línea del título,
-                // o simplemente usar la posición absoluta como está.
                 className="px-4 py-2 bg-red-600 text-white font-semibold rounded-md shadow hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-                disabled={loading} // Deshabilitar mientras carga datos
+                disabled={loading || pagos.length === 0} // Deshabilitar si carga o no hay pagos
             >
-                {loading ? 'Cargando...' : 'Descargar PDF'}
+                {loading ? 'Cargando...' : (pagos.length > 0 ? 'Descargar PDF' : 'Sin datos para PDF')}
             </button>
         </div>
 
@@ -271,10 +293,10 @@ export const AdminReportes = () => {
               </div>
             </>
           )}
-          {/* Nota: El botón de descarga se movió fuera de este flexbox para posicionarlo absolutamente */}
         </div>
       </div>
 
+      {/* Contenido del reporte (excluyendo el botón de descarga que es absoluto) */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -324,12 +346,11 @@ export const AdminReportes = () => {
             </div>
           </div>
 
-          {/* Gráficos */}
+          {/* Gráficos (Se mantienen en la UI pero no se incluyen en el PDF con este método simple) */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Gráfico de pagos por día */}
             <div className="bg-white p-4 rounded-lg shadow">
               <h3 className="text-lg font-semibold mb-4">Pagos por Día</h3>
-              {/* Asegúrate de que el contenedor del gráfico tenga una altura definida */}
               <div className="h-80">
                 {datosPorDia.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
@@ -362,7 +383,6 @@ export const AdminReportes = () => {
             {/* Gráfico de métodos de pago */}
             <div className="bg-white p-4 rounded-lg shadow">
               <h3 className="text-lg font-semibold mb-4">Distribución por Método de Pago</h3>
-               {/* Asegúrate de que el contenedor del gráfico tenga una altura definida */}
               <div className="h-80">
                 {resumenMetodosPago.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
@@ -416,14 +436,13 @@ export const AdminReportes = () => {
                     pagos.map((pago) => (
                       <tr key={pago.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                          {/* Mostrar la fecha formateada de manera segura */}
-                          {pago.fechaPago?.toDate() ? pago.fechaPago.toDate().toLocaleDateString('es-ES') : 'Fecha no disponible'}
+                           {/* Usar el objeto Date que ya convertimos */}
+                          {pago.fechaPago ? pago.fechaPago.toLocaleDateString('es-ES') : 'Fecha no disponible'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                           {pago.metodoPago || 'Desconocido'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {/* Formatear el total */}
                           {formatoMoneda(pago.total)}
                         </td>
                       </tr>
