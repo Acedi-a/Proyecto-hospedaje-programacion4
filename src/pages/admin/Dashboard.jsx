@@ -15,10 +15,12 @@ export const AdminDashboard = () => {
           <p className="text-gray-500">Bienvenido al panel de administración</p>
         </div>
         <div className="flex gap-2">
+        <Link to="/admin/reportes">
           <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
             Descargar Reporte
           </button>
-          <Link to="/admin/habitaciones/nueva">
+          </Link>
+          <Link to="/admin/crear">
             <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700">
               Nueva Habitación
             </button>

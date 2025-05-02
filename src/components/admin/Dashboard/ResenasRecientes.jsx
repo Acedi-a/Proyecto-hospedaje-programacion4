@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy, limit, where } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { db } from "../../../data/firebase";
 
 export const RecentReviews = () => {
@@ -11,92 +11,32 @@ export const RecentReviews = () => {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        // Asumiendo que las reseñas están en la colección "reservas" con un campo "calificacion"
-        // o si existe una colección dedicada para reseñas
-        const reservasRef = collection(db, "reservas");
-        const q = query(
-          reservasRef, 
-          where("calificacion", ">=", 1), 
-          orderBy("calificacion", "desc"), 
-          limit(3)
-        );
-        
+        const reseñasRef = collection(db, "reseñas");
+        const q = query(reseñasRef, orderBy("fecha", "desc"), limit(3));
         const querySnapshot = await getDocs(q);
-        
+
         if (querySnapshot.empty) {
-          // Si no hay reseñas, usamos datos de ejemplo
-          setReviews([
-            {
-              cliente: "Carlos Rodríguez",
-              habitacion: "Suite Deluxe",
-              fecha: "2 Abr 2025",
-              puntuacion: 5,
-              comentario: "Excelente servicio y atención. Las instalaciones son impecables.",
-            },
-            {
-              cliente: "Ana Martínez",
-              habitacion: "Habitación Estándar",
-              fecha: "28 Mar 2025",
-              puntuacion: 4,
-              comentario: "Muy buena experiencia. El desayuno podría mejorar.",
-            },
-            {
-              cliente: "Juan Pérez",
-              habitacion: "Cabaña Familiar",
-              fecha: "25 Mar 2025",
-              puntuacion: 5,
-              comentario: "Increíble lugar para descansar en familia. Volveremos pronto.",
-            },
-          ]);
+          setReviews([]);
         } else {
           const reviewsData = [];
           querySnapshot.forEach((doc) => {
             const data = doc.data();
-            
-            // Formatea la fecha para visualización
-            const fechaReserva = data.fechaReserva?.toDate();
-            const fechaStr = fechaReserva
-              ? `${fechaReserva.getDate()} ${fechaReserva.toLocaleDateString('es-ES', { month: 'short' })} ${fechaReserva.getFullYear()}`
-              : "Fecha no disponible";
-              
+
             reviewsData.push({
               id: doc.id,
-              cliente: data.resumenReserva?.cliente || "Cliente sin nombre",
-              habitacion: data.habitacion || "Habitación sin especificar",
-              fecha: fechaStr,
-              puntuacion: data.calificacion || 5,
-              comentario: data.comentario || data.comentariosAdicionales || "Sin comentarios"
+              cliente: data.cliente || "Cliente desconocido",
+              habitacion: data.habitacion || "Habitación no especificada",
+              fecha: data.fecha || "Fecha no disponible",
+              puntuacion: data.puntuacion || 5,
+              comentario: data.comentario || "Sin comentarios"
             });
           });
-          
+
           setReviews(reviewsData);
         }
       } catch (error) {
         console.error("Error al obtener reseñas:", error);
-        // En caso de error, usamos datos de ejemplo
-        setReviews([
-          {
-            cliente: "Carlos Rodríguez",
-            habitacion: "Suite Deluxe",
-            fecha: "2 Abr 2025",
-            puntuacion: 5,
-            comentario: "Excelente servicio y atención. Las instalaciones son impecables.",
-          },
-          {
-            cliente: "Ana Martínez",
-            habitacion: "Habitación Estándar",
-            fecha: "28 Mar 2025",
-            puntuacion: 4,
-            comentario: "Muy buena experiencia. El desayuno podría mejorar.",
-          },
-          {
-            cliente: "Juan Pérez",
-            habitacion: "Cabaña Familiar",
-            fecha: "25 Mar 2025",
-            puntuacion: 5,
-            comentario: "Increíble lugar para descansar en familia. Volveremos pronto.",
-          },
-        ]);
+        setReviews([]);
       } finally {
         setLoading(false);
       }
