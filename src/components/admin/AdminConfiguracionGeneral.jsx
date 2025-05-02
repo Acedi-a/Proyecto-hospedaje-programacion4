@@ -71,13 +71,14 @@ export const AdminConfiguracionGeneral = () => {
                 <div>
                     <label className="block text-sm font-medium mb-1">Nombre del hospedaje</label>
                     <input
-                        type="text"
-                        name="nombreHospedaje"
-                        value={configuracion.nombreHospedaje}
-                        onChange={handleChange}
-                        className="p-2 border border-gray-300 rounded-md w-full"
-                        required
-                    />
+  type="text"
+  name="nombreHospedaje"
+  value={configuracion.nombreHospedaje}
+  onChange={handleChange}
+  className="p-2 border border-gray-300 rounded-md w-full bg-gray-100 cursor-not-allowed"
+  readOnly
+/>
+
                 </div>
                 <div>
                     <label className="block text-sm font-medium mb-1">Email de contacto</label>

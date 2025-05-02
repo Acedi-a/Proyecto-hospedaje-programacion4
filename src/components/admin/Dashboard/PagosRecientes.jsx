@@ -30,7 +30,7 @@ export const RecentPayments = () => {
             cliente: data.resumenReserva?.cliente || "Cliente sin nombre",
             reserva: data.idreserva || "Sin ID de reserva",
             fecha: fechaStr,
-            monto: data.total ? `$${data.total}` : "$0",
+            monto: data.total ? `Bs. ${data.total}` : "Bs.0",
             metodo: data.metodoPago || "No especificado"
           });
         });

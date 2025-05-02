@@ -73,7 +73,7 @@ export const RecentReservations = () => {
             habitacion: habitacionNombre,
             fechas: fechasStr,
             estado: data.estado || "pendiente",
-            monto: montoTotal > 0 ? `$${montoTotal}` : "Monto no disponible",
+            monto: montoTotal > 0 ? `Bs. ${montoTotal}` : "Monto no disponible",
             comentarios: data.comentariosAdicionales || null,
           });
         }

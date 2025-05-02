@@ -142,7 +142,7 @@ export const StatsCards = () => {
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
               <span className="text-gray-500 text-sm">Ingresos Mensuales</span>
-              <span className="text-3xl font-bold">${stats.monthlyIncome.toLocaleString()}</span>
+              <span className="text-3xl font-bold">Bs. {stats.monthlyIncome.toLocaleString()}</span>
             </div>
             <div className="p-3 bg-emerald-100 rounded-full">
               <DollarSign className="h-6 w-6 text-emerald-600" />

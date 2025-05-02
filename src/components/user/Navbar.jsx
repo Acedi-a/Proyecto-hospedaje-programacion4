@@ -1,26 +1,50 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, User, LogOut, Settings, LogIn, ClipboardPlus } from 'lucide-react';
-import { auth } from '../../data/firebase';
+import { auth, db } from '../../data/firebase';
 import { signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
 export const Navbar = ({ uid }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [nombreUsuario, setNombreUsuario] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
 
   const routes = [
     { href: '/', label: 'Inicio', requiresAuth: false },
-    { href: '/reservas', label: 'Mis Reservas', requiresAuth: true }, // Mark this route as requiring auth
+    { href: '/reservas', label: 'Mis Reservas', requiresAuth: true },
     { href: '/reservas/nueva', label: 'Nueva Reserva', requiresAuth: false },
     { href: '/calificaciones', label: 'Calificaciones', requiresAuth: false },
     { href: '/celia', label: 'Celia', requiresAuth: false },
   ];
 
-  const isActive = (path) => {
-    return location.pathname === path;
-  };
+  const isActive = (path) => location.pathname === path;
+
+  useEffect(() => {
+    const obtenerNombreUsuario = async () => {
+      if (!uid) return;
+      try {
+        const docRef = doc(db, 'usuarios', uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const nombre = data.nombre || 'Usuario';
+          const nombreCapitalizado = nombre.charAt(0).toUpperCase() + nombre.slice(1).toLowerCase();
+          setNombreUsuario(nombreCapitalizado);
+        } else {
+          console.warn('No se encontró el usuario en Firestore.');
+        }
+      } catch (error) {
+        console.error('Error al obtener el nombre del usuario:', error);
+      }
+    };
+  
+   
+
+    obtenerNombreUsuario();
+  }, [uid]);
 
   const handleSignOut = async () => {
     try {
@@ -56,8 +80,10 @@ export const Navbar = ({ uid }) => {
               <Menu className="h-6 w-6" />
             </button>
             <Link to="/" className="ml-4 md:ml-0 flex items-center">
-              <img src='/logo-hostal2.png' alt="Logo" className=" h-72 w-auto p-1 border-emerald-500 rounded-md"
-
+              <img
+                src="/logo-hostal2.png"
+                alt="Logo"
+                className="h-72 w-auto p-1 border-emerald-500 rounded-md"
               />
             </Link>
           </div>
@@ -65,29 +91,29 @@ export const Navbar = ({ uid }) => {
           {isMenuOpen && (
             <div className="absolute top-16 left-0 w-full bg-white border-b shadow-lg md:hidden z-50">
               <nav className="flex flex-col gap-4 p-4">
-                {routes.map((route) => (
-                  // Conditional rendering for routes based on authentication status
-                  ((route.requiresAuth && uid && uid.length > 0) || !route.requiresAuth) && (
+                {routes.map((route) =>
+                  ((route.requiresAuth && uid) || !route.requiresAuth) ? (
                     <Link
                       key={route.href}
                       to={route.href}
-                      className={`text-lg font-medium transition-colors hover:text-primary px-2 py-1 rounded-md ${isActive(route.href)
-                        ? 'text-primary font-semibold'
-                        : 'text-muted-foreground'
-                        }`}
+                      className={`text-lg font-medium transition-colors hover:text-primary px-2 py-1 rounded-md ${
+                        isActive(route.href)
+                          ? 'text-primary font-semibold'
+                          : 'text-muted-foreground'
+                      }`}
                       onClick={() => setIsMenuOpen(false)}
                     >
                       {route.label}
                     </Link>
-                  )
-                ))}
+                  ) : null
+                )}
                 {uid ? (
                   <>
                     <Link
                       to="/perfil"
                       className="px-3 py-2 text-base hover:bg-gray-100 rounded-md"
                     >
-                      Mi Perfil
+                      {nombreUsuario || 'Perfil'}
                     </Link>
                     <button
                       onClick={handleSignOut}
@@ -116,26 +142,24 @@ export const Navbar = ({ uid }) => {
             </div>
           )}
 
-          {/* Menú desktop */}
           <nav className="hidden md:flex items-center gap-6">
-            {routes.map((route) => (
-              // Conditional rendering for routes based on authentication status
-              ((route.requiresAuth && uid && uid.length > 0) || !route.requiresAuth) && (
+            {routes.map((route) =>
+              ((route.requiresAuth && uid) || !route.requiresAuth) ? (
                 <Link
                   key={route.href}
                   to={route.href}
-                  className={`text-md font-medium transition-colors hover:text-primary py-2 px-3 rounded-4xl ${isActive(route.href)
-                    ? 'text-white bg-emerald-600 font-semibold'
-                    : 'bg-white text-muted-foreground'
-                    }`}
+                  className={`text-md font-medium transition-colors hover:text-primary py-2 px-3 rounded-4xl ${
+                    isActive(route.href)
+                      ? 'text-white bg-emerald-600 font-semibold'
+                      : 'bg-white text-muted-foreground'
+                  }`}
                 >
                   {route.label}
                 </Link>
-              )
-            ))}
+              ) : null
+            )}
           </nav>
 
-          {/* Botón de usuario o botones de auth */}
           <div className="relative flex items-center gap-2">
             {uid ? (
               <div className="relative">
@@ -144,17 +168,16 @@ export const Navbar = ({ uid }) => {
                   className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full transition"
                 >
                   <User className="h-5 w-5" />
-                  <span>Mi Cuenta</span>
+                  <span>{nombreUsuario || 'Cuenta'}</span>
                 </button>
 
-                {/* Dropdown */}
                 {isDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 border py-1">
                     <Link
                       to="/perfil"
                       className="flex items-center px-4 py-2 text-sm hover:bg-gray-100"
                     >
-                      <User className="h-4 w-4 mr-2" /> Mi Perfil
+                      <User className="h-4 w-4 mr-2" /> {nombreUsuario || 'Perfil'}
                     </Link>
                     <Link
                       to="/reservas"
