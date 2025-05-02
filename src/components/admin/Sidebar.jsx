@@ -12,11 +12,41 @@ import {
   User,
 } from "lucide-react"
 import { getAuth, signOut } from "firebase/auth"
+import { useEffect, useState } from "react"
+import { getFirestore, doc, getDoc } from "firebase/firestore"
 
 export const Sidebar = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const auth = getAuth()
+  const db = getFirestore()
+
+  const user = auth.currentUser
+  const [nombre, setNombre] = useState("")
+  const [correo, setCorreo] = useState("")
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (user) {
+        try {
+          const userRef = doc(db, "usuarios", user.uid)
+          const userSnap = await getDoc(userRef)
+
+          if (userSnap.exists()) {
+            const userData = userSnap.data()
+            setNombre(userData.nombre || "Administrador")
+            setCorreo(user.email)
+          } else {
+            console.log("No se encontró el documento del usuario.")
+          }
+        } catch (error) {
+          console.error("Error obteniendo datos del usuario:", error)
+        }
+      }
+    }
+
+    fetchUserData()
+  }, [user])
 
   const handleLogout = async () => {
     try {
@@ -107,8 +137,12 @@ export const Sidebar = () => {
             <User className="h-4 w-4 text-emerald-600" />
           </div>
           <div>
-            <p className="text-sm font-medium">Admin Usuario</p>
-            <p className="text-xs text-muted-foreground">admin@hospedaje.com</p>
+            <p className="text-sm font-medium">
+              {nombre || "Administrador"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {correo || "admin@hospedaje.com"}
+            </p>
           </div>
         </div>
         <button
