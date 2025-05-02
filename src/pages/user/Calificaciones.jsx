@@ -5,7 +5,6 @@ import { db } from "../../data/firebase"
 import { collection, getDocs, query, where } from "firebase/firestore"
 
 export const Calificaciones = () => {
-  // Estado inicial del tab: por defecto "Todas las Opiniones" si no hay usuario, se ajustará en useEffect
   const [activeTab, setActiveTab] = useState("todas-calificaciones");
   const [misCalificaciones, setMisCalificaciones] = useState([]);
   const [todasCalificaciones, setTodasCalificaciones] = useState([]);
@@ -30,7 +29,7 @@ export const Calificaciones = () => {
 
     const fetchMisCalificaciones = async (userId) => {
       if (!userId) {
-        setMisCalificaciones([]); // Clear previous user ratings if logged out
+        setMisCalificaciones([]);
         return;
       }
 
@@ -47,29 +46,25 @@ export const Calificaciones = () => {
       }
     };
 
-    // Siempre cargamos todas las calificaciones
     fetchTodasCalificaciones();
 
-    // Si hay un usuario logueado, también cargamos sus calificaciones
     if (userData?.uid) {
       fetchMisCalificaciones(userData.uid);
     } else {
-      // Si no hay usuario, aseguramos que 'Mis Calificaciones' esté vacío
       setMisCalificaciones([]);
     }
 
 
-  }, [userData?.uid]); // Dependencia en userData.uid para recargar si cambia el usuario
+  }, [userData?.uid]); 
 
 
-  // Efecto para ajustar la pestaña activa inicial o al cambiar el usuario
   useEffect(() => {
     if (userData?.uid) {
-      setActiveTab("mis-calificaciones"); // Si hay usuario, por defecto "Mis Calificaciones"
+      setActiveTab("mis-calificaciones"); 
     } else {
-      setActiveTab("todas-calificaciones"); // Si no hay usuario, por defecto "Todas las Opiniones"
+      setActiveTab("todas-calificaciones"); 
     }
-  }, [userData?.uid]); // Dependencia en userData.uid para ajustar al cambiar el usuario
+  }, [userData?.uid]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -91,7 +86,6 @@ export const Calificaciones = () => {
       <div className="mb-8">
         <div className="border-b">
           <nav className="flex -mb-px">
-            {/* Mostrar "Mis Calificaciones" solo si hay un usuario logueado */}
             {userData?.uid && (
               <button
                 className={`py-2 px-4 border-b-2 font-medium text-sm ${activeTab === "mis-calificaciones"
@@ -103,7 +97,6 @@ export const Calificaciones = () => {
                 Mis Calificaciones
               </button>
             )}
-            {/* Mostrar "Todas las Opiniones" siempre */}
             <button
               className={`py-2 px-4 border-b-2 font-medium text-sm ${activeTab === "todas-calificaciones"
                 ? "border-emerald-500 text-emerald-600"

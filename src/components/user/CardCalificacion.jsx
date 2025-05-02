@@ -21,7 +21,7 @@ export const CardCalificacion = ({ calificacion, esMia }) => {
             {esMia ? "Tu reseña" : calificacion.cliente || "Cliente"}
           </h3>
           <p className="text-sm text-gray-500">
-            {calificacion.fechaComentario?.toDate().toLocaleDateString("es-ES", {
+            {calificacion.fecha?.toDate().toLocaleDateString("es-ES", {
               day: "2-digit",
               month: "short",
               year: "numeric"

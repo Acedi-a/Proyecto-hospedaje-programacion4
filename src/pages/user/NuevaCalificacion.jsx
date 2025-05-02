@@ -52,10 +52,11 @@ export const NuevaCalificacion = () => {
       await addDoc(collection(db, "reseñas"), {
         cliente: userData.nombre+" "+userData.apellido,
         comentario,
-        fechaComentario: Timestamp.now(),
+        fecha: Timestamp.now(),
         reservaId: reservaSeleccionada.id,
         puntuacion,
-        usuarioId: userData.uid
+        usuarioId: userData.uid,
+        habitacion: reservaSeleccionada.habitacion,
       })
 
       alert("Calificación enviada con éxito")
