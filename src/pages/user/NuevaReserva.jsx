@@ -7,6 +7,7 @@ import { ReservaPago } from "../../components/user/SeccionReservaPago";
 import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "../../data/firebase.jsx";
 import { useOutletContext } from "react-router-dom";
+import { SeccionReservaConfirmacionRecibo } from "../../components/user/SeccionReservaConfirmacionRecibo.jsx";
 
 export const NuevaReserva = () => {
 
@@ -29,6 +30,7 @@ export const NuevaReserva = () => {
     precioNoche: 0,
     imagenUrl: "",
   });
+
   //console.log("DATOS DEL USER:", userData);
 
   const handleFormChange = (e) =>
@@ -86,9 +88,7 @@ export const NuevaReserva = () => {
         return (
           formData.fechaInicio &&
           formData.fechaFin &&
-          formData.nombre &&
-          formData.email &&
-          formData.telefono
+          formData.huespedes > 0 
         );
       default:
         return true;
@@ -158,10 +158,11 @@ export const NuevaReserva = () => {
           onFormChange={handleFormChange}
           onDateChange={handleDateChange}
           onServiceToggle={handleServiceToggle}
+          imagenFondo={formData.imagenUrl}
         />
       )}
       {step === 3 && <ReservaPago onSuccess={() => AddDetallesPagoReserva()} />}
-      {step === 4 && <ReservaConfirmacion formData={formData} calcularTotal={calcularTotal} onFinish={finishReservation} />}
+      {step === 4 && <SeccionReservaConfirmacionRecibo formData={formData} calcularTotal={calcularTotal} onFinish={finishReservation} datauser={userData} />}
 
       {/* Botones de navegación */}
       <div className="flex justify-between mt-8">

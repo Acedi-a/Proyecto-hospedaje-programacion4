@@ -1,6 +1,7 @@
 import { MapPin, Calendar as CalendarIcon, User as UserIcon, CreditCard as CreditCardIcon, CheckCircle } from "lucide-react";
+import { data } from "react-router-dom";
 
-export const ReservaConfirmacion = ({ formData, calcularTotal }) => {
+export const ReservaConfirmacion = ({ formData, calcularTotal, datauser }) => {
   // Formatear fechas
   const formatDate = (date) => {
     return date ? new Date(date).toLocaleDateString("es-ES", {
@@ -9,6 +10,8 @@ export const ReservaConfirmacion = ({ formData, calcularTotal }) => {
       day: "numeric"
     }) : "-";
   };
+
+  console.log("USERDATA?: ", datauser);
 
   return (
     <div className="border rounded-lg overflow-hidden shadow-md bg-white">
@@ -30,9 +33,9 @@ export const ReservaConfirmacion = ({ formData, calcularTotal }) => {
             <h3 className="font-semibold">Datos del Huésped</h3>
           </div>
           <div className="pl-7 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-800">
-            <div><span className="text-gray-500">Nombre:</span> {formData.nombre}</div>
-            <div><span className="text-gray-500">Email:</span> {formData.email}</div>
-            <div><span className="text-gray-500">Teléfono:</span> {formData.telefono}</div>
+            <div><span className="text-gray-500">Nombre:</span> {datauser.nombre+" "+datauser.apellido}</div>
+            <div><span className="text-gray-500">Email:</span> {datauser.email}</div>
+            <div><span className="text-gray-500">Teléfono:</span> {datauser.telefono}</div>
             <div><span className="text-gray-500">Huéspedes:</span> {formData.huespedes}</div>
           </div>
         </div>
@@ -71,7 +74,7 @@ export const ReservaConfirmacion = ({ formData, calcularTotal }) => {
             <div className="pl-7 space-y-2 text-sm text-gray-800">
               <ul className="list-disc list-inside">
                 {formData.serviciosAdicionales.map((servicio, index) => (
-                  <li key={index}>{servicio.nombre} {servicio.precio}</li>
+                  <li className="flex gap-2 text-center items-center" key={index}>{servicio.nombre}:<span className="font-semibold text-lg text-emerald-600">{servicio.precio}</span></li>
                 ))}
               </ul>
             </div>
