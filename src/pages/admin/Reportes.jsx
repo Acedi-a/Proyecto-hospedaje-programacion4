@@ -1,10 +1,7 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react"; 
 import { db } from "../../data/firebase";
 import { collection, getDocs, query, where, Timestamp, orderBy } from "firebase/firestore";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-
-// Importar librerías para PDF
-import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
 export const AdminReportes = () => {
@@ -23,14 +20,8 @@ export const AdminReportes = () => {
 
   // Estados para gráficos
   const [datosPorDia, setDatosPorDia] = useState([]);
-
-  // Colores para gráficos
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
-  // Referencia para el contenido del reporte que se va a descargar
-  const reportRef = useRef(); // Crear una referencia
-
-  // Establecer período inicial
   useEffect(() => {
     establecerPeriodo("ultimo-mes");
   }, []);
@@ -42,7 +33,6 @@ export const AdminReportes = () => {
     }
   }, [fechaInicio, fechaFin]);
 
-  // Función para establecer período
   const establecerPeriodo = (periodo) => {
     const hoy = new Date();
     let inicio, fin;
@@ -75,7 +65,6 @@ export const AdminReportes = () => {
 
     try {
       const fechaInicioTS = Timestamp.fromDate(new Date(fechaInicio));
-      // Asegurarse de incluir todo el día de la fecha fin
       const fechaFinTS = Timestamp.fromDate(new Date(new Date(fechaFin).setHours(23, 59, 59, 999)));
 
       const pagosRef = collection(db, "Pagos");
@@ -90,7 +79,10 @@ export const AdminReportes = () => {
       const pagosData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
-        total: parseFloat(doc.data().total) || 0
+        // Asegurarse de que total es un número
+        total: parseFloat(doc.data().total) || 0,
+        // Convertir la fecha de Timestamp a objeto Date para fácil manejo
+        fechaPago: doc.data().fechaPago?.toDate()
       }));
 
       setPagos(pagosData);
@@ -99,15 +91,14 @@ export const AdminReportes = () => {
 
     } catch (error) {
       console.error("Error al cargar pagos:", error);
+      alert("Error al cargar los datos de pagos.");
     } finally {
       setLoading(false);
     }
   };
 
-
   // Calcular resúmenes estadísticos
   const calcularResumenes = (pagosData) => {
-    // Calcular total general
     const total = pagosData.reduce((sum, pago) => sum + pago.total, 0);
     setTotalPagos(total);
 
@@ -126,11 +117,10 @@ export const AdminReportes = () => {
     // Convertir el objeto a un array y ordenar por total descendente
     setResumenMetodosPago(Object.values(metodos).sort((a, b) => b.total - a.total));
 
-    // Calcular por día para gráfico
     const porDia = pagosData.reduce((acc, pago) => {
       if (!pago.fechaPago) return acc;
 
-      const fecha = pago.fechaPago.toDate().toISOString().split('T')[0];
+      const fecha = pago.fechaPago.toISOString().split('T')[0];
       if (!acc[fecha]) {
         acc[fecha] = { fecha, total: 0, cantidad: 0 };
       }
@@ -139,95 +129,132 @@ export const AdminReportes = () => {
       return acc;
     }, {});
 
-    // Convertir el objeto a un array y ordenar por fecha ascendente
     setDatosPorDia(Object.values(porDia).sort((a, b) => new Date(a.fecha) - new Date(b.fecha)));
   };
 
-
-  // Formatear moneda
   const formatoMoneda = (valor) => {
     return new Intl.NumberFormat('es-ES', {
       style: 'currency',
-      currency: 'BOB' // O la moneda que uses
+      currency: 'BOB' 
     }).format(valor);
   };
 
-  // Manejar cambio de período
   const cambiarPeriodo = (e) => {
     const periodo = e.target.value;
     setPeriodoSeleccionado(periodo);
-    // Solo establecer fechas si no es personalizado, si es personalizado los inputs se encargan
     if (periodo !== 'personalizado') {
         establecerPeriodo(periodo);
     }
   };
 
-  // **Función para generar PDF**
-  const generatePdf = async () => {
-      const input = reportRef.current; // Usar la referencia al contenedor del reporte
+  const generatePdf = () => {
+      const pdf = new jsPDF('p', 'mm', 'a4'); 
+      let yPos = 15; 
+      const margin = 14; 
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const bottomMargin = 15;
 
-      if (!input) {
-          console.error("No se encontró el elemento del reporte para generar el PDF.");
-          return;
+      // Título del reporte
+      pdf.setFontSize(18);
+      pdf.text("Reporte de Pagos", margin, yPos);
+      yPos += 10;
+
+      // Rango de fechas del reporte
+      pdf.setFontSize(12);
+      pdf.text(`Periodo: ${fechaInicio} al ${fechaFin}`, margin, yPos);
+      yPos += 15;
+
+      // Resumen estadístico
+      pdf.setFontSize(14);
+      pdf.text("Resumen:", margin, yPos);
+      yPos += 7;
+
+      pdf.setFontSize(12);
+      pdf.text(`Total Recaudado: ${formatoMoneda(totalPagos)}`, margin, yPos);
+      yPos += 7;
+
+      pdf.text(`Cantidad de Pagos: ${pagos.length}`, margin, yPos);
+      yPos += 7;
+
+      if (resumenMetodosPago.length > 0) {
+          const metodosSummary = resumenMetodosPago.map(m => `${m.metodo} (${formatoMoneda(m.total)})`).join(', ');
+          pdf.text(`Distribución: ${metodosSummary}`, margin, yPos, { maxWidth: pageWidth - 2 * margin }); 
+          yPos += 7 * (Math.ceil((`Distribución: ${metodosSummary}`.length / (pageWidth / 3)))); 
+      } else {
+           yPos += 7; 
       }
 
-      // Opciones para html2canvas
-      const options = {
-          scale: 2, // Aumenta la escala para mejor resolución
-          useCORS: true, // Habilita CORS si tienes imágenes externas (necesario para gráficos SVG)
-          logging: false, // Desactiva los logs de html2canvas
-          // Captura el área completa, incluso si hay scroll
-          windowWidth: input.scrollWidth,
-          windowHeight: input.scrollHeight,
-      };
+       pdf.text(`Promedio por Pago: ${pagos.length > 0 ? formatoMoneda(totalPagos / pagos.length) : formatoMoneda(0)}`, margin, yPos);
+       yPos += 15;
 
-      try {
-          const canvas = await html2canvas(input, options);
-          const imgData = canvas.toDataURL('image/png');
+       // Detalle de Pagos (Simulación de Tabla Manual)
+       pdf.setFontSize(14);
+       pdf.text("Detalle de Pagos:", margin, yPos);
+       yPos += 10; 
 
-          const pdf = new jsPDF('p', 'mm', 'a4');
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = pdf.internal.pageSize.getHeight();
-          const imgHeight = canvas.height * pdfWidth / canvas.width; // Calcula la altura de la imagen en el PDF
+       // Posiciones X para las columnas (ajustar según necesites)
+       const colXDate = margin;
+       const colXMethod = margin + 40; 
+       const colXTotal = pageWidth - margin - 30; 
 
-          let position = 0; // Posición vertical actual en el PDF
+       pdf.setFontSize(10);
+       pdf.text("Fecha", colXDate, yPos);
+       pdf.text("Método", colXMethod, yPos);
+       pdf.text("Total", colXTotal, yPos, { align: 'right' }); 
+       yPos += 5; 
 
-          // Añadir la primera página
-          pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+       pdf.line(margin, yPos, pageWidth - margin, yPos);
+       yPos += 5; 
 
-          // Calcular la altura restante de la imagen
-          let heightLeft = imgHeight - pdfHeight;
+       pdf.setFontSize(9);
+       const rowHeight = 6; 
+       const maxRowY = pageHeight - bottomMargin; 
 
-          // Añadir páginas adicionales si es necesario
-          while (heightLeft >= 0) {
-              position = heightLeft - imgHeight; // Mueve hacia arriba para la siguiente sección
-              pdf.addPage(); // Añade una nueva página
-              pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight); // Añade la imagen
-              heightLeft -= pdfHeight; // Reduce la altura restante
-          }
+       pagos.forEach((pago, index) => {
+           if (yPos + rowHeight > maxRowY) {
+               pdf.addPage(); 
+               yPos = margin + 15; 
 
-          pdf.save('reporte_pagos.pdf'); // Nombre del archivo a descargar
+               pdf.setFontSize(10);
+               pdf.text("Fecha", colXDate, yPos);
+               pdf.text("Método", colXMethod, yPos);
+               pdf.text("Total", colXTotal, yPos, { align: 'right' });
+               yPos += 5;
+               pdf.line(margin, yPos, pageWidth - margin, yPos);
+               yPos += 5;
+               pdf.setFontSize(9); 
+           }
 
-      } catch (err) {
-          console.error("Error al generar el PDF:", err);
-          alert("Hubo un error al generar el PDF. Por favor, intenta de nuevo.");
-      }
+           // Añadir datos de la fila actual
+           const fechaStr = pago.fechaPago ? pago.fechaPago.toLocaleDateString('es-ES') : 'N/A';
+           const metodoStr = pago.metodoPago || 'Desconocido';
+           const totalStr = formatoMoneda(pago.total);
+
+           pdf.text(fechaStr, colXDate, yPos);
+           pdf.text(metodoStr, colXMethod, yPos);
+           pdf.text(totalStr, colXTotal, yPos, { align: 'right' });
+
+           yPos += rowHeight; // Mover a la siguiente fila
+       });
+       
+       // Guardar el PDF (esto dispara la descarga)
+       pdf.save('reporte_pagos.pdf');
   };
 
+
   return (
-    // Asignar la referencia al div principal y hacerlo relativo para posicionar el botón
-    <div className="p-6 bg-gray-50 relative" ref={reportRef}>
+    // El div principal ya no necesita ref, pero mantener 'relative' podría ser útil para el botón
+    <div className="p-6 bg-gray-50 relative">
 
         {/* Botón de Descarga de PDF - Posicionado absolutamente en la esquina superior derecha */}
-        <div className="absolute top-4 right-4 z-10"> {/* z-10 asegura que esté por encima de otros elementos si se superponen */}
+        <div className="absolute top-4 right-4 z-10"> {/* z-10 asegura que esté por encima */}
             <button
-                onClick={generatePdf}
-                // Añadir margen a la derecha si hay otros elementos en la misma línea del título,
-                // o simplemente usar la posición absoluta como está.
+                onClick={generatePdf} // Llama a la nueva función generatePdf
                 className="px-4 py-2 bg-red-600 text-white font-semibold rounded-md shadow hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-                disabled={loading} // Deshabilitar mientras carga datos
+                disabled={loading || pagos.length === 0} // Deshabilitar si carga o no hay pagos
             >
-                {loading ? 'Cargando...' : 'Descargar PDF'}
+                {loading ? 'Cargando...' : (pagos.length > 0 ? 'Descargar PDF' : 'Sin datos para PDF')}
             </button>
         </div>
 
@@ -271,10 +298,10 @@ export const AdminReportes = () => {
               </div>
             </>
           )}
-          {/* Nota: El botón de descarga se movió fuera de este flexbox para posicionarlo absolutamente */}
         </div>
       </div>
 
+      {/* Contenido del reporte (excluyendo el botón de descarga que es absoluto) */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -324,7 +351,7 @@ export const AdminReportes = () => {
             </div>
           </div>
 
-          {/* Gráficos */}
+          {/* Gráficos (Se mantienen en la UI pero no se incluyen en el PDF con este método simple) */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Gráfico de pagos por día */}
             <div className="bg-white p-4 rounded-lg shadow">
@@ -397,7 +424,7 @@ export const AdminReportes = () => {
             </div>
           </div>
 
-          {/* Tabla detallada */}
+          {/* Tabla detallada (mostrada en la UI) */}
           <div className="bg-white rounded-lg shadow overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold">Detalle de Pagos</h3>
@@ -416,14 +443,13 @@ export const AdminReportes = () => {
                     pagos.map((pago) => (
                       <tr key={pago.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                          {/* Mostrar la fecha formateada de manera segura */}
-                          {pago.fechaPago?.toDate() ? pago.fechaPago.toDate().toLocaleDateString('es-ES') : 'Fecha no disponible'}
+                           {/* Usar el objeto Date que ya convertimos */}
+                          {pago.fechaPago ? pago.fechaPago.toLocaleDateString('es-ES') : 'Fecha no disponible'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                           {pago.metodoPago || 'Desconocido'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {/* Formatear el total */}
                           {formatoMoneda(pago.total)}
                         </td>
                       </tr>
