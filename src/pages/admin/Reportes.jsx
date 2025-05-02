@@ -134,7 +134,7 @@ export const AdminReportes = () => {
   const formatoMoneda = (valor) => {
     return new Intl.NumberFormat('es-ES', {
       style: 'currency',
-      currency: 'EUR'
+      currency: 'Bs'
     }).format(valor);
   };
 
