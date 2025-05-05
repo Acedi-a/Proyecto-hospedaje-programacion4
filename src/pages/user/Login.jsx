@@ -96,10 +96,10 @@ export const Login = () => {
         </div>
       </div>
       
-      {/* Información del hospedaje - lado izquierdo */}
+      {/* Información del hospedaje - lado izquierdo */}  
       <div className="flex-1 z-10 pl-8 md:pl-16 lg:pl-24 pr-4">
         <div className="max-w-lg">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">Hospedaje Rural</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">El Refugio del Valle</h1>
           <p className="text-lg md:text-xl text-white/90 mb-8">
             Disfruta de la tranquilidad y belleza de la naturaleza en nuestras acogedoras habitaciones
           </p>
